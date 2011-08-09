@@ -1,0 +1,42 @@
+#gui {
+	font-family: verdana; 
+	font-size: 13px;
+	width: 1200px;
+	margin: auto;
+}
+
+#gui .loader-info {
+	display: inline-block;
+	margin-left: 3px;
+	display: none; /* hidden for now */
+}
+
+#gui .info-panel {
+	float: left;
+	padding-top: 30px;
+}
+#gui .info-panel ul {
+	list-style-type: none;
+	padding-left: 0px;
+}
+
+#gui .info-panel ul li {
+	margin-bottom: 1px;
+	color: white;
+}
+
+#gui .info-panel ul li p.download object{
+	vertical-align: middle;
+}
+
+#gui div.canvas-container {
+	width: 640px;
+	height: 480px;
+	background-color: black;/*#7f7f7f;*/
+	padding-top: 30px;
+}
+
+#gui div.canvas-controller {
+	position: relative;
+	top: 40px;	
+}

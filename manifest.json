@@ -1,0 +1,18 @@
+{
+   "background_page": "background.html",
+   "content_scripts": [ {
+      "css": [ "css/PhotoSynthViewer.css", "css/CoverFlow.css", "css/Accordion.css" ],
+      "js": [ "js/prototype.js", "js/Three.js", "js/Stats.js", "js/Transitions.js", "js/PhotoSynthViewer.js", "js/PhotoSynthLoader.js", "js/PhotoSynthMetadataLoader.js", "js/swfobject.js", "js/downloadify.js", "js/CoverFlow.js", "js/Accordion.js", "contentscript.js" ],
+      "matches": [ "http://photosynth.net/*" ]
+   } ],
+   "description": "PhotoSynth Viewer based on WebGL using Three.js.",
+   "icons": {
+      "128": "sample-128.png",
+      "48": "sample-48.png"
+   },
+   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCzM8JZgIHsf9gfidw9QK08xjGS5Pdb8HB3p9LUum7lYFaGi4b4VEAiRGYCU8e6A9M+SFKyWBH5zVW+9v7kbHvNiDwd2Qh8UoIq0faf1tXCMys5SXPsmx01TAIWvN5SVZvQd8/8uPfaTfo4HIH0gAeBwswe2VeCdk5xctyDTzBWrQIDAQAB",
+   "name": "Three.js PhotoSynth WebGL Viewer",
+   "permissions": [ "http://*.vo.llnwd.net/*", "http://photosynth.net/*" ],
+   "update_url": "http://clients2.google.com/service/update2/crx",
+   "version": "0.0.2"
+}

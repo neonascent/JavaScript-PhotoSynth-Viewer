@@ -1,0 +1,153 @@
+<!--
+	Copyright (c) 2011 ASTRE Henri (http://www.visual-experiments.com)
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in
+	all copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+	THE SOFTWARE.
+-->
+<!DOCTYPE html>
+<html>
+	<head>
+	</head>
+	<body>
+		<script src="js/jDataView.js"></script>
+		<script src="js/ArrayReader.js"></script>
+		<script>	
+	
+		function parsePhotoSynthBinFile(data) {
+
+			var input = new ArrayReader(data);
+			var versionMajor  = input.ReadBigEndianUInt16();
+			var versionMinor  = input.ReadBigEndianUInt16();
+
+			if (versionMajor != 1 || versionMinor != 0) {
+				return false;
+			}
+
+			var nbImages = input.ReadCompressedInt();
+
+			//reading unknown header
+			for (var i=0; i<nbImages; ++i) {							
+				var nbInfo = input.ReadCompressedInt();
+				for (var j=0; j<nbInfo; j++) {
+					var vertexIndex = input.ReadCompressedInt();
+					var vertexValue = input.ReadCompressedInt();
+				}
+			}
+
+			var nbVertices = input.ReadCompressedInt();	
+			var vertsArray = new Array(nbVertices * 3);
+			var colsArray  = new Array(nbVertices * 3);
+
+			for (var i=0; i<nbVertices; i++) {
+				var x = input.ReadBigEndianSingle();
+				var y = input.ReadBigEndianSingle();
+				var z = input.ReadBigEndianSingle();
+				vertsArray[i*3+0] = parseFloat(x);
+				vertsArray[i*3+1] = parseFloat(y);
+				vertsArray[i*3+2] = parseFloat(z);
+
+				var color = input.ReadBigEndianUInt16();
+				var r = (((color >> 11) * 255) / 31) & 0xff;
+				var g = ((((color >> 5) & 63) * 255) / 63) & 0xff;
+				var b = (((color & 31) * 255) / 31) & 0xff;
+				colsArray[i*3+0] = r/255;
+				colsArray[i*3+1] = g/255;
+				colsArray[i*3+2] = b/255;
+			}
+
+			return {
+				"nbVertices": nbVertices,
+				"positions": vertsArray,
+				"colors": colsArray
+			};
+		}	
+	
+		function downloadBinFile(url, callback) {
+
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", url, true);
+			if (xhr.hasOwnProperty("responseType"))
+				xhr.responseType = "arraybuffer";
+			else
+				xhr.overrideMimeType('text/plain; charset=x-user-defined');
+
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState == 4) {
+					var data = xhr.response ? xhr.response : xhr.mozResponseArrayBuffer;				
+					callback(parsePhotoSynthBinFile(data));
+				}
+			};		
+
+			xhr.send();	
+		}	
+	
+		function downloadJson(url, callback) {
+		
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", url, true);		
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState == 4) {
+					callback(xhr.responseText);
+				}			
+			};		
+			xhr.send(null);	
+		}
+		
+		function downloadSoap(guid, callback) {
+		
+			var request  = '<?xml version="1.0" encoding="utf-8"?>';
+			request += '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">';
+			request += '  <soap:Body>';
+			request += '    <GetCollectionData xmlns="http://labs.live.com/">';
+			request += '      <collectionId>' + guid + '</collectionId>';
+			request += '      <incrementEmbedCount>false</incrementEmbedCount>';
+			request += '    </GetCollectionData>';
+			request += '  </soap:Body>';
+			request += '</soap:Envelope>';		
+			
+			var xhr = new XMLHttpRequest();
+			xhr.open("POST", "http://photosynth.net/photosynthws/PhotosynthService.asmx", true);
+			xhr.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+			xhr.setRequestHeader("SOAPAction", "http://labs.live.com/GetCollectionData");
+			
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState == 4) {
+					console.log(xhr.responseXML.getElementsByTagName("JsonUrl")[0]);
+					callback(xhr.responseXML);
+				}			
+			};		
+			xhr.send(request);
+		}
+	  
+		function onRequest(request, sender, callback) {
+			if (request.action == "downloadSoap") {
+				downloadSoap(request.guid, callback);
+			}			
+			else if (request.action == "downloadJson") {
+				downloadJson(request.url, callback);
+			}
+			else if (request.action == "downloadBinFile") {
+				downloadBinFile(request.url, callback);
+			}			
+		};
+
+		// Wire up the listener.
+		chrome.extension.onRequest.addListener(onRequest);
+		</script>
+	</body>
+</html>
