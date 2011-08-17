@@ -78,6 +78,86 @@
 			}, false);
 			p.appendChild(button);			
 			
+			// closest test button
+			
+			p.appendChild(document.createTextNode(" | "));
+			
+			var testbutton = document.createElement("input");
+			testbutton.setAttribute("type", "button");
+			testbutton.setAttribute("value", "Test");
+			testbutton.addEventListener("click", function() {
+				viewer.test();
+			}, false);
+			
+
+			p.appendChild(testbutton);	
+			
+		
+			Event.observe(window, 'keydown', function(event) {
+				var char;
+				if (event.which == null) {
+					char= String.fromCharCode(event.keyCode);    // old IE
+				} else if (event.which != 0) {
+				     char= String.fromCharCode(event.which);	  // All others
+				}
+				switch(char)
+				{
+				case "Q":
+					viewer.movement("rl");
+					break;
+				case "W":
+					viewer.movement("f");
+					break;
+				case "E":
+					viewer.movement("rr");
+					break;
+				case "A":
+					viewer.movement("l");
+					break;
+				case "S":
+					viewer.movement("b");
+					break;
+				case "D":
+					viewer.movement("r");
+					break;
+				default:
+				}
+			});
+			
+			
+			// swipe
+			var down_x = null;
+			var up_x = null;
+
+			
+			Event.observe(canvasContainer, 'mousedown', function(event) {
+				down_x = event.pageX;
+			});
+			
+			Event.observe(canvasContainer, 'mouseup', function(event) {
+				up_x = event.pageX;
+				do_work();
+			});
+			
+			function do_work() {
+				  if ((down_x - up_x) > 50)
+				    {
+				        slide_right();
+				    }
+				    if ((up_x - down_x) > 50)
+				    {
+				        slide_left();
+				    }
+			}
+
+			function slide_right() {
+				viewer.movement("rr");
+			}
+			
+			function slide_left() {
+				viewer.movement("rl");
+			}
+			
 			//p.appendChild(document.createTextNode(" | "));
 			canvasController.appendChild(p);
 		}

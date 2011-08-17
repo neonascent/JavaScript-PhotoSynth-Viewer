@@ -10,7 +10,7 @@
       "128": "sample-128.png",
       "48": "sample-48.png"
    },
-   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCzM8JZgIHsf9gfidw9QK08xjGS5Pdb8HB3p9LUum7lYFaGi4b4VEAiRGYCU8e6A9M+SFKyWBH5zVW+9v7kbHvNiDwd2Qh8UoIq0faf1tXCMys5SXPsmx01TAIWvN5SVZvQd8/8uPfaTfo4HIH0gAeBwswe2VeCdk5xctyDTzBWrQIDAQAB",
+   "key": "josh",
    "name": "Three.js PhotoSynth WebGL Viewer",
    "permissions": [ "http://*.vo.llnwd.net/*", "http://photosynth.net/*" ],
    "update_url": "http://clients2.google.com/service/update2/crx",

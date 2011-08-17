@@ -79,6 +79,77 @@ function PhotoSynthMetadataLoader(guid, options) {
 	this.getCamera = function(coordSystemIndex, cameraIndex) {
 		return _coords[coordSystemIndex].cameras[cameraIndex];
 	};
+	
+	// get nearest camera to index
+	// go through all cameras and find nearest. 
+	// could optimise based on, say, +- 20 if camera index is linked to position?
+	// need better logic for finding cameras
+	this.getNearestCamera = function(coordSystemIndex, cameraIndex) {
+		var originCamera = _coords[coordSystemIndex].cameras[cameraIndex];
+		
+		var distance = null;
+		var closest = null;
+		
+		for (var i = 0; i < _coords[coordSystemIndex].cameras.length; i++) {
+			if ((i != cameraIndex) && (_coords[coordSystemIndex].cameras[i] !== undefined)) {
+					var testDistance = this.lineDistance(originCamera, _coords[coordSystemIndex].cameras[i]);
+					if ((closest == null) || (testDistance < distance)) {
+						distance = testDistance;
+						closest = i;
+					}
+			}
+		}
+	
+		// return _coords[coordSystemIndex].cameras[closest];
+		return closest;
+	}
+	
+	// same as getNearestCamera but just returns distance
+	this.getDistanceToNearestCamera = function(coordSystemIndex, cameraIndex) {
+		var originCamera = _coords[coordSystemIndex].cameras[cameraIndex];
+		
+		var distance;
+		var closest;
+		
+		for (var i = 0; i < _coords[coordSystemIndex].cameras.length; i++) {
+			if ((i != cameraIndex) && (_coords[coordSystemIndex].cameras[i] !== undefined)) {
+					var testDistance = this.lineDistance(originCamera, _coords[coordSystemIndex].cameras[i]);
+					if ((closest == undefined) || (testDistance < distance)) {
+						distance = testDistance;
+						closest = i;
+					}
+			}
+		}
+	
+		// return _coords[coordSystemIndex].cameras[closest];
+		return distance;
+	}
+	
+	// gets nearest, then look around a bit further for other points
+	this.getNearby = function(coordSystemIndex, cameraIndex, percentage) {
+		var cameraIndexes = []; // initialise an empty array
+		var originCamera = _coords[coordSystemIndex].cameras[cameraIndex];
+		
+		
+		var searchDistance = this.getDistanceToNearestCamera(coordSystemIndex, cameraIndex);
+		
+		
+		if (searchDistance !== undefined) {
+			// if there is a closest point
+			for (var i = 0; i < _coords[coordSystemIndex].cameras.length; i++) {
+				if ((i != cameraIndex) && (_coords[coordSystemIndex].cameras[i] !== undefined)) {
+						var testDistance = this.lineDistance(originCamera, _coords[coordSystemIndex].cameras[i]);
+						if (testDistance <= ((searchDistance * (100 + percentage))/ 100)) {
+						//if (testDistance <= searchDistance) {
+							// add this camera
+							cameraIndexes.push(i);
+						}
+				}
+			} //endfor
+		} // endif close point
+		return cameraIndexes;
+	}
+
 
 	this.loadCoordSystem = function(coordSystemIndex, options) {
 		new PhotoSynthLoader(_that, coordSystemIndex, options);
@@ -96,6 +167,22 @@ function PhotoSynthMetadataLoader(guid, options) {
 	};
 	
 	loadMetadata(guid);
+	
+	// josh's working out distance 
+	this.lineDistance = function(a, b)
+	{
+		var dx = a.position[0] - b.position[0];
+		var dy = a.position[1] - b.position[1];
+		var dz = a.position[2] - b.position[2];
+		return Math.sqrt(dx*dx + dy*dy + dz*dz);
+	}	
+	
+	// work out vector angle from coordinate system
+	// ignore roll
+	// ignore y, just use plane xz
+	function vectorAngle(x, z) {
+		return (Math.atan2(x,z) - Math.atan2(0,0))* (180/Math.PI);
+	}
 	
     function loadMetadata(guid) {
 		_state = LOADING_SOAP;
