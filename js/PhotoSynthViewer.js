@@ -34,8 +34,14 @@
 	var _searchDistance = 500;
 	
 	// directions
-	var _directions = 	[new THREE.Quaternion(0, 0, 0, 1), new THREE.Quaternion(0, -0.707, 0, 0.707), new THREE.Quaternion(0, 1, 0, 0),  new THREE.Quaternion(0, 0.707, 0, 0.707)] ; // forward, right, back, left (right and left reversed)
-	var _directionNames = ["forward", "right", "back", "left"];
+	var _directions = 	[new THREE.Quaternion(0, 0, 0, 1), new THREE.Quaternion(0, 0, -0.707, 0.707), new THREE.Quaternion(0, 0, 1, 0),  new THREE.Quaternion(0, 0, 0.707, 0.707)] ; // forward, right, back, left down Z
+	var _directionNames = ["forward", "right", "back", "left", "anticlockwise", "clockwise"];
+	var _direction;
+	
+	// direction icons
+	var dIcons = ['112.png','109.png','111.png','110.png','120.png','119.png'];
+	
+	
 	this.getCamera = function() {
 		return _camera;
 	};
@@ -91,9 +97,15 @@
 		
 		// just change image
 		
-		
+		getDirections();
 		var url  = _thumbs.thumbs[cameraIndex].url;
-		_container.update('<img src="' + url + '" ondragstart="return false" onselectstart="return false"/>');
+		var updateHTML = '<img src="' + url + '" ondragstart="return false" onselectstart="return false"/>';
+		for (var k = 0; k < 6; k++) {
+			if (_direction[k] !== -1) {
+				 updateHTML =  updateHTML + '<img src="'+chrome.extension.getURL('img/'+dIcons[k])+'" alt="" />';
+			} 
+		}
+		_container.update(updateHTML);
 		
 	};
 
@@ -108,12 +120,16 @@
 	
 	
 	// can "cache" many of these things.  Nearest cameras, possible angles, etc. 
-	this.movement = function(d) {
+	function getDirections() {
 		
 		// get current camera
 		var currentCamera = _loader.getCamera(_currentCoordIndex, _currentCameraIndex);
 		var currentOrientation = new THREE.Quaternion(currentCamera.orientation[0], currentCamera.orientation[1], currentCamera.orientation[2], currentCamera.orientation[3]);
 		
+		// set up direction placeholders
+		var directionSet = 0;
+		_direction = [-1,-1,-1,-1,-1,-1];
+		var directionDistance = [];
 		
 		
 		// get list of nearby cameras
@@ -150,46 +166,41 @@
 			
 			// work out direction 
 			// problem with this when cameras are very close to each other, cause very small height changes become significant.
-			var directionSet = false;
+
+			
 			for (var i = 0; i < orientatedCameras.length; i++) {
 				var thisCamera = _loader.getCamera(_currentCoordIndex, orientatedCameras[i]);
-				// work out 
+				// work out direction quat
 				var startVec = new THREE.Vector3(currentCamera.position[0], currentCamera.position[1], currentCamera.position[2]); 
 				var endVec = new THREE.Vector3(thisCamera.position[0], thisCamera.position[1], thisCamera.position[2] );
-				
 				var quat = lookat(startVec,endVec);
+				
+				// this seems to be wrong alignment. Z should be y
 				
 				// work out relative direction from view direction of the camera
 				var rot = relativeQuaternion(currentOrientation, quat);
 				//rot.multiplySelf(_qx);
 				
 				var angle = vToDegrees(QuaternionToEuler(rot));
+				
 				var distance =  _loader.lineDistance(currentCamera, thisCamera);
 							
-				// change to index of Angles 0, 1, 2, 3
-						
-				var direction = [];
-				var directionDistance = [];
-				
-				for (var k = 0; k < _directions.length; k++) {
-					var Angle = vToDegrees(QuaternionToEuler(relativeQuaternion(_directions[k], rot)));
-					if ((45 > Angle.y) && (Angle.y > -45))  {
-						if ((directionDistance[k] == undefined) || (distance > directionDistance[k])) {
-							directionDistance[k] = distance;
-							direction[k] = orientatedCameras[i];
-							directionSet = true;
-						}
-						//alert (_directionNames[d] + " : " + orientatedCameras[i] + " angle: "+ Angle.y + " distance: " + distance);
+				// work out which direction this is
+				var thisDirection = getDirection(rot);
+				if (thisDirection !== false ) {
+					// if this has a direction, check if it is closer, and update
+					if ((directionDistance[thisDirection] == undefined) || (distance > directionDistance[thisDirection])) {
+						directionDistance[thisDirection] = distance;
+						_direction[thisDirection] = orientatedCameras[i];
+						directionSet++;
 					}
-				}
-				
+				}		
 			}
 			
 			
 			
 			//_similarAngle
 			// these are z-ais down!  Need to reverse
-			var rleft, rleftd, rright, rrightd;
 			
 			// second bit: rotations
 			for (var i = 0; i < rotatedCameras.length; i++) {
@@ -204,73 +215,97 @@
 				// just do z at the moment (rotate xy) 
 				if ((-_similarAngle > angle.z) || (angle.z  >  _similarAngle)) {
 					// this is a significant z-axis rotation
-					if ((0 > angle.z) && ((rleftd == undefined) || (rleftd < angle.z))) {
-						rleftd = angle.z;
-						rleft = rotatedCameras[i];
+					if ((0 > angle.z) && ((directionDistance[4] == undefined) || (directionDistance[4] < angle.z))) {
+						directionDistance[4] = angle.z;
+						_direction[4] = rotatedCameras[i];
 					} 
-					if ((angle.z > 0) && ((rrightd == undefined) || (angle.z < rrightd))) {
-						rrightd = angle.z;
-						rright = rotatedCameras[i];
+					if ((angle.z > 0) && ((directionDistance[5] == undefined) || (angle.z < directionDistance[5]))) {
+						directionDistance[5] = angle.z;
+						_direction[5] = rotatedCameras[i];
 					} 
 				}
 
 			}
 			
-			if (directionSet) {
+			if (directionSet > 2) {
 				break;
 			}
 			counter++;
 		}
-		
-		
 	
-
 		
+	}
+
+	
+	// move in a direction
+	this.movement = function(d) {
 		// check rotation options
 		
 		switch(d)
 		{
 		case "f":
-			if (direction[0] !== undefined) {
-				this.moveToCamera(_currentCoordIndex, direction[0], {});
+			if (_direction[0] !== -1) {
+				this.moveToCamera(_currentCoordIndex, _direction[0], {});
 			}
 			break;
 		case "r":
-			if (direction[1] !== undefined) {
-				this.moveToCamera(_currentCoordIndex, direction[1], {});
+			if (_direction[1] !== -1) {
+				this.moveToCamera(_currentCoordIndex, _direction[1], {});
 			}
 			break;		
 		case "b":
-			if (direction[2] !== undefined) {
-				this.moveToCamera(_currentCoordIndex, direction[2], {});
+			if (_direction[2] !== -1) {
+				this.moveToCamera(_currentCoordIndex, _direction[2], {});
 			}
 			break;
 		case "l":
-			if (direction[3] !== undefined) {
-				this.moveToCamera(_currentCoordIndex, direction[3], {});
+			if (_direction[3] !== -1) {
+				this.moveToCamera(_currentCoordIndex, _direction[3], {});
 			}
 			break;		
 		case "rl":
-		  if (rrightd !== undefined) {
-			  this.moveToCamera(_currentCoordIndex, rright , {});
+		  if (_direction[5] !== -1) {
+			  this.moveToCamera(_currentCoordIndex, _direction[5] , {});
 		  }
 		  break;
 		case "rr":
-		  if (rleftd !== undefined) {
-			  this.moveToCamera(_currentCoordIndex, rleft , {});
+		  if (_direction[4] !== -1) {
+			  this.moveToCamera(_currentCoordIndex, _direction[4] , {});
 		  }
 		  break;
 		default:
 		}
 		
 		
-		
-		
-		
-
-		
-		
 	}
+	
+	// work out which direction this is
+	function getDirection(rot) {
+		// set empty variables for which direction
+		var lowestAngle; 
+		var directionIndex;
+
+		for (var k = 0; k < 4; k++) {
+			
+			var angle = vToDegrees(QuaternionToEuler(relativeQuaternion(_directions[k], rot)));
+			var yDeviation = Math.abs(angle.y);
+			if (45 > yDeviation)  {
+				if ((directionIndex == undefined) || (lowestAngle > yDeviation)) {
+					directionIndex = k;
+					lowestAngle = yDeviation;
+				}
+			}
+		}
+		
+		if (directionIndex !== undefined) {
+			//alert(_directionNames[directionIndex]);
+			return directionIndex;	
+		} else {
+			return false;
+		}
+		
+	} 
+		
 	
 	// 2 Vectors to Quat from : https://github.com/mrdoob/three.js/issues/382 (with fix)
 		function lookat (vecStart, vecEnd, vecUp) {
@@ -707,6 +742,7 @@
 												if (firstCameraIndex != -1) {
 													_that.setCamera(index, firstCameraIndex);
 													_currentCameraIndex = firstCameraIndex;
+													_that.moveToCamera(_currentCoordIndex, _currentCameraIndex, {});
 												}
 																								
 											},
