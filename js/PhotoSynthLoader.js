@@ -32,14 +32,15 @@
 		_state = LOADING;
 		var coordSystem = metadataLoader.getCoordSystem(coordSystemIndex);
 		
-		_nbBinFiles = coordSystem.nbBinFiles;
+		/*_nbBinFiles = coordSystem.nbBinFiles;
 		for (var i=0; i<_nbBinFiles; ++i) {
 			coordSystem.binFiles[i] = {};
 			coordSystem.binFiles[i].loaded = false;
-		}
+		}*/
 		_onStart(metadataLoader);
-		for (var i=0; i<_nbBinFiles; ++i)
-			downloadBinFile(metadataLoader.getSoapInfo().collectionRoot, coordSystemIndex, i, _nbBinFiles);			
+		/*for (var i=0; i<_nbBinFiles; ++i)
+			downloadBinFile(metadataLoader.getSoapInfo().collectionRoot, coordSystemIndex, i, _nbBinFiles);		*/	
+		_onComplete(metadataLoader);
 	}
 	
 	function downloadBinFile(collectionRoot, coordSystemIndex, binFileIndex) {

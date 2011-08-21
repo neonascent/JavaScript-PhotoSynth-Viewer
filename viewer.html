@@ -1,0 +1,195 @@
+<!--
+	Copyright (c) 2011 ASTRE Henri (http://www.visual-experiments.com)
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in
+	all copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+	THE SOFTWARE.
+-->
+<!DOCTYPE html>
+<html>
+	<head>
+	</head>
+	<script src="js/prototype.js"></script>
+	<script src="js/Three.js"></script>
+	<script src="js/Stats.js"></script>
+	<script src="js/Transitions.js"></script>
+	<script src="js/PhotoSynthViewer.js"></script>
+	<script src="js/PhotoSynthLoader.js"></script>
+	<script src="js/PhotoSynthMetadataLoader.js"></script>
+	<script src="js/swfobject.js"></script>
+	<script src="js/downloadify.js"></script>
+	<script src="js/CoverFlow.js"></script>
+	<script src="js/Accordion.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/PhotoSynthViewer.css"> 
+	<link rel="stylesheet" type="text/css" href="css/CoverFlow.css"> 
+	<link rel="stylesheet" type="text/css" href="css/Accordion.css"> 
+	<script>	
+	
+	var _viewer;
+	
+	function createInlineWebGLViewer(parent, guid) {
+		
+		var parentDiv = document.createElement("div");
+		parentDiv.style.backgroundColor = "black";
+		parentDiv.style.width = "100%";
+		parentDiv.style.height = "560px";
+		
+		var gui = document.createElement("div");
+		gui.setAttribute("id", "gui");
+		
+		var div = document.createElement("div");
+		div.setAttribute("style", "width: 675px; height: 585px; float: left");					
+		
+		var loaderInfo = document.createElement("div");
+		loaderInfo.setAttribute("class", "loader-info");
+		
+		var canvasContainer = document.createElement("div");
+		canvasContainer.setAttribute("class", "canvas-container");
+
+
+	
+		Event.observe(window, 'keydown', function(event) {
+			var char;
+			if (event.which == null) {
+				char= String.fromCharCode(event.keyCode);    // old IE
+			} else if (event.which != 0) {
+			     char= String.fromCharCode(event.which);	  // All others
+			}
+			switch(char)
+			{
+			case "Q":
+				_viewer.movement("rl");
+				break;
+			case "W":
+				_viewer.movement("f");
+				break;
+			case "E":
+				_viewer.movement("rr");
+				break;
+			case "A":
+				_viewer.movement("l");
+				break;
+			case "S":
+				_viewer.movement("b");
+				break;
+			case "D":
+				_viewer.movement("r");
+				break;
+			default:
+			}
+		});
+		
+		
+		// swipe
+		var down_x = null;
+		var up_x = null;
+
+		
+		Event.observe(canvasContainer, 'mousedown', function(event) {
+			down_x = event.pageX;
+		});
+		
+		Event.observe(canvasContainer, 'mouseup', function(event) {
+			up_x = event.pageX;
+			do_work();
+		});
+		
+		function do_work() {
+			  if ((down_x - up_x) > 50)
+			    {
+			        slide_right();
+			    }
+			    if ((up_x - down_x) > 50)
+			    {
+			        slide_left();
+			    }
+		}
+
+		function slide_right() {
+			_viewer.movement("rr");
+		}
+		
+		function slide_left() {
+			_viewer.movement("rl");
+		}
+				
+		div.appendChild(loaderInfo);
+		div.appendChild(canvasContainer);
+		gui.appendChild(div);
+		
+		var infoPanel = document.createElement("div");
+		infoPanel.setAttribute("class", "info-panel");
+		
+		gui.appendChild(infoPanel);
+		parentDiv.appendChild(gui);
+		parent.update(parentDiv);		
+	}
+
+	function getGuidFromUrl() {
+		var url = document.URL;
+		var tmp = url.split("?guid=");
+		if (tmp.length == 2) {
+			return tmp[1];
+		}
+		else {
+			return "";
+		}
+	}
+
+	function isSilverlightEnable() {
+		var plugins = navigator.plugins;
+		for (var i=0; i<plugins.length; ++i) {
+			if (plugins.item(i).name == "Silverlight Plug-In")
+				return true;
+		}
+		return false;
+	}
+	
+	function addViewer() {
+		var isOverCanvas = false;	
+		var silverlightIsEnable = isSilverlightEnable();
+		var displayDiv = document.getElementById("displayDiv");
+		var guid = getGuidFromUrl();
+			
+		document.onmousewheel = function(e) {
+			if (isOverCanvas)
+				return false; 
+		};
+	
+		//Warning: there is a race condition between Microsoft script detecting Sylverlight and my script...
+		//They are replacing the content of "silverlightDiv" with a innerHTML call if Sylverlight is desactivated
+		//Thus it will remove my canvas if I add it in "silverlightDiv" before their call to innerHTML :-(
+		//->This is why I have added the canvas before "silverlightDiv" and not as a child
+		
+		if (guid != "") { //Silverlight is desactivated and were are on a page with a viewable synth
+			
+			createInlineWebGLViewer(displayDiv, guid);
+			_viewer = new PhotoSynthViewer(document.getElementById("gui"));
+			_viewer.load(guid);
+			
+		}
+		else if (guid == "" ){ //Silverlight is activated and were are on a page with a viewable synth
+			
+			//Should warn the user to desactivate Silverlight or this extension
+			alert("no guid!");
+		}
+	}
+</script>
+<body onLoad="addViewer();">
+<div id="displayDiv">test</div>
+</body>
+</html>

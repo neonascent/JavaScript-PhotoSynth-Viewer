@@ -102,7 +102,7 @@
 		var updateHTML = '<img src="' + url + '" ondragstart="return false" onselectstart="return false"/>';
 		for (var k = 0; k < 6; k++) {
 			if (_direction[k] !== -1) {
-				 updateHTML =  updateHTML + '<img src="'+chrome.extension.getURL('img/'+dIcons[k])+'" alt="" />';
+				 updateHTML =  updateHTML + '<img src="img/'+dIcons[k]+'" alt="" />';
 			} 
 		}
 		_container.update(updateHTML);
@@ -434,7 +434,7 @@
 		});	
 	}
 	
-	var _imgLoading = '<img src="'+chrome.extension.getURL('img/loading.gif')+'" alt="" />';
+	var _imgLoading = '<img src="img/loading.gif" alt="" />';
 	
 	function setupScene() {
 		
@@ -774,8 +774,8 @@
 												Downloadify.create(span0, {
 													filename: 'coord_system_' + index + '.ply',
 													data: function() { return _that.getCoordSystemAsPly(loader, index, false); },
-													swf: chrome.extension.getURL('swf/downloadify.swf'),
-													downloadImage: chrome.extension.getURL('img/downloadify.png'),
+													swf: 'swf/downloadify.swf',
+													downloadImage: 'img/downloadify.png',
 													width: 16,
 													height: 16,
 													transparent: true,
@@ -785,8 +785,8 @@
 												Downloadify.create(span1, {
 													filename: 'coord_system_' + index + '_with_cameras.ply',
 													data: function() { return _that.getCoordSystemAsPly(loader, index, true); },
-													swf: chrome.extension.getURL('swf/downloadify.swf'),
-													downloadImage: chrome.extension.getURL('img/downloadify.png'),
+													swf: 'swf/downloadify.swf',
+													downloadImage: 'img/downloadify.png',
 													width: 16,
 													height: 16,
 													transparent: true,
