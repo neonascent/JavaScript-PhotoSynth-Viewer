@@ -22,7 +22,6 @@
 <!DOCTYPE html>
 <html>
 	<head>
-	</head>
 	<script src="js/prototype.js"></script>
 	<script src="js/Three.js"></script>
 	<script src="js/Stats.js"></script>
@@ -48,11 +47,18 @@
 		parentDiv.style.width = "100%";
 		parentDiv.style.height = "560px";
 		
+		var imageWidth = 340;
+		var imageHeight = 585;
+		var xC = imageWidth / 2;
+		var yC = imageHeight /2;
+		var nbAllow = 60;
+		
+		
 		var gui = document.createElement("div");
 		gui.setAttribute("id", "gui");
 		
 		var div = document.createElement("div");
-		div.setAttribute("style", "width: 675px; height: 585px; float: left");					
+		div.setAttribute("style", "width: "+imageWidth+"px; height: 585px; float: left");					
 		
 		var loaderInfo = document.createElement("div");
 		loaderInfo.setAttribute("class", "loader-info");
@@ -97,26 +103,55 @@
 		// swipe
 		var down_x = null;
 		var up_x = null;
+		var up_y = null;
 
-		
 		Event.observe(canvasContainer, 'mousedown', function(event) {
 			down_x = event.pageX;
 		});
 		
 		Event.observe(canvasContainer, 'mouseup', function(event) {
 			up_x = event.pageX;
+			up_y = event.pageY;
+			do_work();
+		});
+		
+		
+		// http://test.lin.net.nz/swipe_demo/
+		
+		Event.observe(canvasContainer, 'touchstart', function(event) {
+			down_x = event.touches[0].pageX;
+			up_x = down_x;
+			up_y = event.touches[0].pageY;
+		});
+		
+		Event.observe(canvasContainer, 'touchmove', function(event) {
+			up_x = event.touches[0].pageX;
+			up_y = event.touches[0].pageY;
+		});
+		
+		Event.observe(canvasContainer, 'touchend', function(event) {
 			do_work();
 		});
 		
 		function do_work() {
-			  if ((down_x - up_x) > 50)
+			  if ((down_x - up_x) > 150)
 			    {
 			        slide_right();
-			    }
-			    if ((up_x - down_x) > 50)
+			    } else if ((up_x - down_x) > 150)
 			    {
 			        slide_left();
+			    } else if( (  up_y > (yC-nbAllow) ) && ( (yC+nbAllow) > up_y )  ) { // vertical center
+			    	if ( nbAllow > up_x ) { // left
+			    		_viewer.movement("l");
+			    	} else if (  (  up_x > (xC-nbAllow) ) && ( (xC+nbAllow) > up_x ) ) { // center
+						_viewer.movement("f");
+			    	} else if ( (imageWidth > up_x) && ( up_x > (imageWidth-nbAllow) ) ) { // right
+						_viewer.movement("r");
+			    	}
+			    } else if ( (imageWidth > up_x) && ( up_y > (imageHeight-nbAllow) ) ) { // back
+					_viewer.movement("b");
 			    }
+			    
 		}
 
 		function slide_right() {
@@ -161,7 +196,6 @@
 	
 	function addViewer() {
 		var isOverCanvas = false;	
-		var silverlightIsEnable = isSilverlightEnable();
 		var displayDiv = document.getElementById("displayDiv");
 		var guid = getGuidFromUrl();
 			
@@ -189,6 +223,7 @@
 		}
 	}
 </script>
+</head>
 <body onLoad="addViewer();">
 <div id="displayDiv">test</div>
 </body>

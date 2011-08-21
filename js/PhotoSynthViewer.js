@@ -442,9 +442,9 @@
 		_camera.position.z = 20;
 		_camera.useTarget = false;
 		_camera.useQuaternion = true;
-		_renderer = new THREE.WebGLRenderer();		
-		_scene    = new THREE.Scene();
-		_renderer.setSize(_width, _height);
+		//_renderer = new THREE.WebGLRenderer();		
+		//_scene    = new THREE.Scene();
+		//_renderer.setSize(_width, _height);
 		//_container.appendChild(_renderer.domElement);
 		
 		
@@ -488,11 +488,11 @@
 			linewidth: 3, 
 			vertexColors: false
 		});
-		
+		/*
 		setInterval(function(){
 			_renderer.render(_scene, _camera);
 			_stats.update();
-		}, 1000/60);
+		}, 1000/60);*/
 		
 	}
 	
@@ -513,9 +513,9 @@
 	function displayCoordSystem(metadataLoader, coordSystemIndex) {
 		initCoordSystem(metadataLoader, coordSystemIndex);
 		var coordSystem = metadataLoader.getCoordSystem(coordSystemIndex);
-		for (var i=0; i<coordSystem.nbBinFiles; ++i) {
-			updateCoordSystem(metadataLoader, coordSystemIndex, i);
-		}
+		//for (var i=0; i<coordSystem.nbBinFiles; ++i) {
+			//updateCoordSystem(metadataLoader, coordSystemIndex, i);
+		//}
 	}
 	
 	function initCoordSystem(metadataLoader, coordSystemIndex) {
@@ -582,7 +582,7 @@
 		
 		_lines =  new THREE.Line(geometry, _camerasFrustrumMaterial, THREE.LinePieces);
 		_camerasFrustrumMaterial.opacity = 0;
-		_scene.addObject(_lines);
+		//_scene.addObject(_lines);
 	}
 	
 	// josh: works out Euler angles (ported from: http://forums.create.msdn.com/forums/p/4574/232603.aspx#232603 )
@@ -651,7 +651,7 @@
 		return relative; 
 	}
 	
-	
+	/*
 	function updateCoordSystem(metadataLoader, coordSystemIndex, binFileIndex) {
 		var coordSystem = metadataLoader.getCoordSystem(coordSystemIndex);
 		coordSystem.pointClouds[binFileIndex] = new THREE.Geometry();
@@ -670,7 +670,7 @@
 		}		
 		_particleSystems[binFileIndex] = new THREE.ParticleSystem(pointCloud, _pointCloudMaterial);
 		_scene.addChild(_particleSystems[binFileIndex]);
-	}
+	}*/
 	
 	function clearScene() {
 		for (var i=0; i<_particleSystems.length; ++i)
@@ -748,7 +748,7 @@
 											},
 											onProgress : function(loader, coordSystemIndex, binFileIndex, percent) {
 												div_elt.innerHTML = Math.round(percent*100)+"%";
-												updateCoordSystem(loader, coordSystemIndex, binFileIndex);
+												//updateCoordSystem(loader, coordSystemIndex, binFileIndex);
 											},											
 											onComplete : function() {
 												div_elt.innerHTML = "";
