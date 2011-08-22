@@ -673,14 +673,14 @@
 	}*/
 	
 	function clearScene() {
-		for (var i=0; i<_particleSystems.length; ++i)
+		/*for (var i=0; i<_particleSystems.length; ++i)
 			_scene.removeChild(_particleSystems[i]);
 		_particleSystems = [];
 		
 		if (_lines) {
 			_scene.removeChild(_lines);
 		}
-		_lines = undefined;
+		_lines = undefined;*/
 	}
 	
 	this.load = function(guid) {

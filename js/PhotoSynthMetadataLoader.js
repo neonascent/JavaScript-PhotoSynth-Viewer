@@ -227,7 +227,7 @@ function PhotoSynthMetadataLoader(guid, options) {
 		*/
 		
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "http://herein.tacticalspace.org/MystRecon/soap.xml", true);
+		xhr.open("GET", "soap.php?guid="+guid, true);
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4) {
@@ -247,7 +247,7 @@ function PhotoSynthMetadataLoader(guid, options) {
 	function parseJson(url, guid, onJsonParsed) {
 
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "http://herein.tacticalspace.org/MystRecon/json.json", true);
+		xhr.open("GET", "json.php?url=" + url, true);
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4) {
