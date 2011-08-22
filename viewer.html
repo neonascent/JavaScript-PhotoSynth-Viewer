@@ -22,17 +22,19 @@
 <!DOCTYPE html>
 <html>
 	<head>
+	<!-- set up size for iPhone and iPad -->
+	<meta name="viewport" content="height=560px,width=460px" /> <!-- ,initial-scale=1,user-scalable=no -->
+	
 	<script src="js/prototype.js"></script>
 	<script src="js/Three.js"></script>
 	<script src="js/Stats.js"></script>
-	<script src="js/Transitions.js"></script>
 	<script src="js/PhotoSynthViewer.js"></script>
 	<script src="js/PhotoSynthLoader.js"></script>
 	<script src="js/PhotoSynthMetadataLoader.js"></script>
-	<script src="js/swfobject.js"></script>
-	<script src="js/downloadify.js"></script>
 	<script src="js/CoverFlow.js"></script>
 	<script src="js/Accordion.js"></script>
+	<!-- include SM2 library -->
+	<script src="js/soundmanager2-nodebug-jsmin.js"></script>
 	<link rel="stylesheet" type="text/css" href="css/PhotoSynthViewer.css"> 
 	<link rel="stylesheet" type="text/css" href="css/CoverFlow.css"> 
 	<link rel="stylesheet" type="text/css" href="css/Accordion.css"> 
@@ -40,11 +42,14 @@
 	
 	var _viewer;
 	
+	// setup sound
+	soundManager.url = './swf/'; // directory where SM2 .SWFs live
+	
 	function createInlineWebGLViewer(parent, guid) {
 		
 		var parentDiv = document.createElement("div");
 		parentDiv.style.backgroundColor = "black";
-		parentDiv.style.width = "100%";
+		parentDiv.style.width = "360px"; // 100%
 		parentDiv.style.height = "560px";
 		
 		var imageWidth = 340;

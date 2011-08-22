@@ -1,7 +1,9 @@
+body {background-color: black;}
+
 #gui {
 	font-family: verdana; 
 	font-size: 13px;
-	width: 100%;
+	width: 360px; /*100%*/
 	margin: auto;
 }
 
@@ -13,7 +15,8 @@
 
 #gui .info-panel {
 	float: left;
-	padding-top: 30px;
+	display: none; /* hidden for now */
+	padding-top: 30px;*/
 }
 #gui .info-panel ul {
 	list-style-type: none;

@@ -19,6 +19,8 @@
 	var _similarAngle = 10; // +- 10 degrees 
 	var _thumbs;
 	
+	var _guid;
+	
 	//camera
 	var _camera;
 	var _qx   = new THREE.Quaternion(1.0, 0.0, 0.0, 0.0);
@@ -40,6 +42,12 @@
 	
 	// direction icons
 	var dIcons = ['112.png','109.png','111.png','110.png','120.png','119.png'];
+	
+	// sound list
+	var _sounds;
+	var _soundReady = false;
+	var _currentSound;
+	var _currentSoundObject;
 	
 	
 	this.getCamera = function() {
@@ -77,12 +85,12 @@
 		_camerasFrustrumMaterial.opacity = (isVisible ? 1.0 : 0.0);
 	};
 	
-	this.setCamera = function(coordSystemIndex, cameraIndex) {
+	/*this.setCamera = function(coordSystemIndex, cameraIndex) {
 		var cam = _loader.getCamera(coordSystemIndex, cameraIndex);
 		_camera.position = new THREE.Vector3(cam.position[0], cam.position[1], cam.position[2]);
 		_camera.quaternion = new THREE.Quaternion(cam.orientation[0], cam.orientation[1], cam.orientation[2], cam.orientation[3]);
 		_camera.quaternion.multiplySelf(_qx);
-	};
+	};*/
 	
 	this.moveToCamera = function(coordSystemIndex, cameraIndex, options) {
 		// record the current camera index
@@ -107,7 +115,30 @@
 		}
 		_container.update(updateHTML);
 		
+		var newSound =  './sounds/'+_guid+ '/background.mp3';
+		if ((_currentSound != newSound) && (_soundReady)) {
+				_currentSound = newSound;
+				//soundManager.stop('aSound');
+				_currentSoundObject = soundManager.createSound({
+				    id: 'aSound',
+				    url: newSound
+				  });
+				
+				// soundManager.stop('hhCymbal')
+				loopSound(_currentSoundObject); //_currentSoundObject.play();
+		}
+
+		
 	};
+	
+	function loopSound(sound) {
+		  sound.play({
+		    onfinish: function() {
+		      loopSound(sound);
+		    }
+		  });
+		}
+
 
 	// move in the angle direction
 	/*this.moveDirection = function(angle) {
@@ -352,7 +383,7 @@
 	   }
 
     
-	this.getCoordSystemAsPly = function(metadataLoader, coordSystemIndex, withCamera) {
+	/*this.getCoordSystemAsPly = function(metadataLoader, coordSystemIndex, withCamera) {
 		
 		var coordSystem = metadataLoader.getCoordSystem(coordSystemIndex);
 		var nbVertices  = metadataLoader.getNbVertices(coordSystemIndex);
@@ -408,7 +439,7 @@
 		}
 		console.log(output);
 		return output;
-	};
+	};*/
 	
 	function moveCameraTo(dstPosition, dstRotation, options) {		
 		var _onUpdate   = options.onUpdate     || function() {};
@@ -442,14 +473,33 @@
 		_camera.position.z = 20;
 		_camera.useTarget = false;
 		_camera.useQuaternion = true;
+		
+		
+		// disable debug mode after development/testing..
+		// soundManager.debugMode = false;
+
+		// The basics: onready() callback
+
+		// Optional: ontimeout() callback for handling start-up failure
+
+		soundManager.onready(function() {
+		    _soundReady = true;
+		});
+		
+		soundManager.ontimeout(function(){
+
+		  // Hrmm, SM2 could not start. Flash blocker involved? Show an error, etc.?
+			alert("Sound failed to start!");
+
+		});
+		
+		
 		//_renderer = new THREE.WebGLRenderer();		
 		//_scene    = new THREE.Scene();
 		//_renderer.setSize(_width, _height);
 		//_container.appendChild(_renderer.domElement);
 		
-		
-		
-		
+
 		/*
 		Event.observe(_renderer.domElement, "mousemove", function(event) {
 			//console.log("mouse move");
@@ -476,7 +526,8 @@
 		_stats = new Stats();
 		_stats.domElement.style.display = "inline-block";
 		//_controller.getElementsByTagName("p")[0].appendChild(_stats.domElement);
-				
+		
+			
 		_pointCloudMaterial = new THREE.ParticleBasicMaterial({
 			size: 0.0125,
 			vertexColors : true
@@ -488,6 +539,7 @@
 			linewidth: 3, 
 			vertexColors: false
 		});
+
 		/*
 		setInterval(function(){
 			_renderer.render(_scene, _camera);
@@ -536,7 +588,7 @@
 			if (coordSystem.cameras[i] !== undefined) {
 				var cam = coordSystem.cameras[i];
 				
-				// 
+				
 				_thumbs = metadataLoader.getJsonInfo();
 				
 				var thumb  = _thumbs.thumbs[i];
@@ -685,6 +737,8 @@
 	
 	this.load = function(guid) {
 		
+		_guid = guid;
+		
 		var loaderInfo = _div.getElementsByClassName("loader-info")[0];
 		loaderInfo.innerHTML = _imgLoading;
 		
@@ -694,6 +748,19 @@
 		_loader = new PhotoSynthMetadataLoader(guid, {
 			onComplete : function() {
 				loaderInfo.innerHTML = "Loaded";
+				// just load the first one!
+				index = 0;
+				initCoordSystem(_loader, index);
+				_loader.loadCoordSystem(index, {
+					onStart : function() {											
+						var firstCameraIndex = getIndexOfFirstCamera(_loader, index);
+						_currentCoordIndex = index;
+						if (firstCameraIndex != -1) {
+							_currentCameraIndex = firstCameraIndex;
+							_that.moveToCamera(_currentCoordIndex, _currentCameraIndex, {});
+						}							
+					}
+				});
 			},
 			onProgress : function(loader) {
 				if (loader.state == 0) {
@@ -740,7 +807,7 @@
 												var firstCameraIndex = getIndexOfFirstCamera(loader, index);
 												_currentCoordIndex = index;
 												if (firstCameraIndex != -1) {
-													_that.setCamera(index, firstCameraIndex);
+													//_that.setCamera(index, firstCameraIndex);
 													_currentCameraIndex = firstCameraIndex;
 													_that.moveToCamera(_currentCoordIndex, _currentCameraIndex, {});
 												}
@@ -761,7 +828,7 @@
 													nbVertices = Math.round(nbVertices/1000)+"k";												
 												span.appendChild(document.createTextNode(" (" + nbCameras + " images, " + nbVertices + " vertices) "));
 												
-												var p = new Element("p", {'class': 'download'});
+												/*var p = new Element("p", {'class': 'download'});
 												p.appendChild(document.createTextNode("Download ply: "));
 												var span0 = document.createElement("span");
 												p.appendChild(span0);
@@ -791,7 +858,7 @@
 													height: 16,
 													transparent: true,
 													append: true
-												});
+												});*/
 												
 												var coordSystem = loader.getCoordSystem(index);												
 												
@@ -860,4 +927,8 @@
 			}
 		});
 	};
+
+
+	
+	
 }
