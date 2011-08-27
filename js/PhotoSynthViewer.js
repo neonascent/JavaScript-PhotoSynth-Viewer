@@ -1,4 +1,4 @@
-﻿function PhotoSynthViewer(div) {
+﻿function PhotoSynthViewer(div, frame, sound) {
 	
 	var _div        = div;
 	var _container  = div.getElementsByClassName("canvas-container")[0];
@@ -6,6 +6,11 @@
 	var _width      = Element.getWidth(_container);
 	var _height     = Element.getHeight(_container);	
 	var _that       = this;
+	
+	// configuration 
+	var useFrame = frame;
+	var useSound = sound;
+	
 	
 	var _renderer;	
 	var _scene;
@@ -16,7 +21,7 @@
 	var _stats;
 	var _loader;	
 	
-	var _similarAngle = 10; // +- 10 degrees 
+	var _similarAngle = 15; // +- 10 degrees 
 	var _thumbs;
 	
 	var _guid;
@@ -33,6 +38,10 @@
 	var _currentCoordIndex;
 	var _isCameraTopView = false;
 	
+	// current image details
+	var _imageWidth;
+	var _imageHeight;
+	
 	var _searchDistance = 500;
 	
 	// directions
@@ -41,7 +50,7 @@
 	var _direction;
 	
 	// direction icons
-	var dIcons = ['112.png','109.png','111.png','110.png','120.png','119.png'];
+	var dIcons = ['112.png','109.png','111.png','110.png','119.png','120.png'];
 	
 	// sound list
 	var _sounds;
@@ -56,6 +65,14 @@
 	
 	this.getLoader = function() {
 		return _loader;
+	};
+	
+	this.getImageHeight = function() {
+		return _imageHeight;
+	};
+	
+	this.getImageWidth = function() {
+		return _imageWidth;
 	};
 	
 	this.toggleTopView = function() {
@@ -107,7 +124,19 @@
 		
 		getDirections();
 		var url  = _thumbs.thumbs[cameraIndex].url;
-		var updateHTML = '<img src="' + url + '" ondragstart="return false" onselectstart="return false"/>';
+		_imageHeight = _thumbs.thumbs[cameraIndex].height;
+		_imageWidth = _thumbs.thumbs[cameraIndex].width;
+		var frame = "";
+		if (useFrame) {
+			var frameFile;
+			if (_imageHeight > _imageWidth) {
+				frameFile = 'portrait-narrow.png';
+			} else {
+				frameFile = 'landscape-narrow.png';
+			}
+			frame = '<img src="img/'+frameFile+'" height="'+(_imageHeight+3)+'" width="'+_imageWidth+'" style="position: relative;  z-index:10; top:-'+(_imageHeight+3)+'px;" ondragstart="return false" onselectstart="return false"/>';
+		}
+		var updateHTML = '<img src="' + url + '" ondragstart="return false" style="position: relative;" onselectstart="return false"/>'+frame;
 		for (var k = 0; k < 6; k++) {
 			if (_direction[k] !== -1) {
 				 updateHTML =  updateHTML + '<img src="img/'+dIcons[k]+'" alt="" />';
@@ -115,19 +144,20 @@
 		}
 		_container.update(updateHTML);
 		
-		var newSound =  './sounds/'+_guid+ '/background.mp3';
-		if ((_currentSound != newSound) && (_soundReady)) {
-				_currentSound = newSound;
-				//soundManager.stop('aSound');
-				_currentSoundObject = soundManager.createSound({
-				    id: 'aSound',
-				    url: newSound
-				  });
-				
-				// soundManager.stop('hhCymbal')
-				loopSound(_currentSoundObject); //_currentSoundObject.play();
+		if (useSound) {
+			var newSound =  './sounds/'+_guid+ '/background.mp3';
+			if ((_currentSound != newSound) && (_soundReady)) {
+					_currentSound = newSound;
+					//soundManager.stop('aSound');
+					_currentSoundObject = soundManager.createSound({
+					    id: 'aSound',
+					    url: newSound
+					  });
+					
+					// soundManager.stop('hhCymbal')
+					loopSound(_currentSoundObject); //_currentSoundObject.play();
+			}
 		}
-
 		
 	};
 	
@@ -475,23 +505,25 @@
 		_camera.useQuaternion = true;
 		
 		
-		// disable debug mode after development/testing..
-		// soundManager.debugMode = false;
-
-		// The basics: onready() callback
-
-		// Optional: ontimeout() callback for handling start-up failure
-
-		soundManager.onready(function() {
-		    _soundReady = true;
-		});
 		
-		soundManager.ontimeout(function(){
+		if (useSound) {
+			// disable debug mode after development/testing..
+			// soundManager.debugMode = false;
 
-		  // Hrmm, SM2 could not start. Flash blocker involved? Show an error, etc.?
-			alert("Sound failed to start!");
+			// The basics: onready() callback
 
-		});
+			// Optional: ontimeout() callback for handling start-up failure
+			soundManager.onready(function() {
+			    _soundReady = true;
+			});
+			
+			soundManager.ontimeout(function(){
+	
+			  // Hrmm, SM2 could not start. Flash blocker involved? Show an error, etc.?
+				alert("Sound failed to start!");
+
+			});
+		}
 		
 		
 		//_renderer = new THREE.WebGLRenderer();		

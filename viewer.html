@@ -52,15 +52,13 @@
 		parentDiv.style.width = "360px"; // 100%
 		parentDiv.style.height = "560px";
 		
-		var imageWidth = 340;
-		var imageHeight = 585;
-		var xC = imageWidth / 2;
-		var yC = imageHeight /2;
 		var nbAllow = 60;
-		
+		var imageWidth = 340;
 		
 		var gui = document.createElement("div");
 		gui.setAttribute("id", "gui");
+		
+		
 		
 		var div = document.createElement("div");
 		div.setAttribute("style", "width: "+imageWidth+"px; height: 585px; float: left");					
@@ -138,8 +136,11 @@
 			do_work();
 		});
 		
-		function do_work() {
-			  if ((down_x - up_x) > 150)
+		function do_work() {	
+			var xC = _viewer.getImageWidth() / 2;
+			var yC = _viewer.getImageHeight() /2;  
+			
+			if ((down_x - up_x) > 150)
 			    {
 			        slide_right();
 			    } else if ((up_x - down_x) > 150)
@@ -150,10 +151,10 @@
 			    		_viewer.movement("l");
 			    	} else if (  (  up_x > (xC-nbAllow) ) && ( (xC+nbAllow) > up_x ) ) { // center
 						_viewer.movement("f");
-			    	} else if ( (imageWidth > up_x) && ( up_x > (imageWidth-nbAllow) ) ) { // right
+			    	} else if ( (_viewer.getImageWidth() > up_x) && ( up_x > (_viewer.getImageWidth()-nbAllow) ) ) { // right
 						_viewer.movement("r");
 			    	}
-			    } else if ( (imageWidth > up_x) && ( up_y > (imageHeight-nbAllow) ) ) { // back
+			    } else if ( (_viewer.getImageWidth() > up_x) && ( up_y > (_viewer.getImageHeight()-nbAllow) ) ) { // back
 					_viewer.movement("b");
 			    }
 			    
@@ -181,7 +182,7 @@
 
 	function getGuidFromUrl() {
 		var url = document.URL;
-		var tmp = url.split("?guid=");
+		var tmp = url.split("guid=");
 		if (tmp.length == 2) {
 			return tmp[1];
 		}
@@ -217,7 +218,7 @@
 		if (guid != "") { //Silverlight is desactivated and were are on a page with a viewable synth
 			
 			createInlineWebGLViewer(displayDiv, guid);
-			_viewer = new PhotoSynthViewer(document.getElementById("gui"));
+			_viewer = new PhotoSynthViewer(document.getElementById("gui"), true, true);
 			_viewer.load(guid);
 			
 		}
