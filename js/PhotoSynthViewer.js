@@ -1,6 +1,7 @@
 ﻿/*
- * Todo: fix wayfinder cardinals and non-close rotations.
+ * Todo: wayfinder cardinals are sometimes off 90 degrees (coordinate systems?)
  * (only effects some synths; works on 38a79f4e-d2b3-42ae-861d-a38dc2cfa8e5)
+ * (output from lookat is wrong sometimes)
  */
 
 
@@ -245,30 +246,38 @@ function PhotoSynthViewer(div, frame, sound) {
 			// work out direction 
 			// problem with this when cameras are very close to each other, cause very small height changes become significant.
 
-			// get rotated cameras
 			// in orientatedCameras, uses _direction, out to _direction
 			for (var i = 0; i < orientatedCameras.length; i++) {
 				var thisCamera = _loader.getCamera(_currentCoordIndex, orientatedCameras[i]);
 				// work out direction quat
+				
+				// 1. create start and end points
 				var startVec = new THREE.Vector3(currentCamera.position[0], currentCamera.position[1], currentCamera.position[2]); 
-				var endVec = new THREE.Vector3(thisCamera.position[0], thisCamera.position[1], thisCamera.position[2] );
-				var quat = lookat(startVec,endVec);
+				var endVec = new THREE.Vector3(thisCamera.position[0], thisCamera.position[1], thisCamera.position[2]);
 				
-				// this seems to be wrong alignment. Z should be y
+				// 2. move start and end so that start is origin
+				endVec.x = endVec.x - startVec.x;
+				endVec.y = endVec.y - startVec.y;
+				endVec.z = endVec.z - startVec.z;		
 				
-				// work out relative direction from view direction of the camera
-				var rot = relativeQuaternion(currentOrientation, quat);
-				//rot.multiplySelf(_qx);
+				// 3. lookat quat in world coordinates
+				var quat = lookat(new THREE.Vector3(),endVec);
 				
-				var angle = vToDegrees(QuaternionToEuler(rot));
+				// 4. work out relative quat from orientation to endVec 
+				var rot = relativeQuaternion(quat, currentOrientation);
 				
+				// 5. find what cardinal is closest
+				var thisDirection = getDirection(rot);
+				
+				
+				
+				 
 				var distance =  _loader.lineDistance(currentCamera, thisCamera);
 							
 				// work out which direction this is
-				var thisDirection = getDirection(rot);
 				if (thisDirection !== false ) {
 					// if this has a direction, check if it is closer, and update
-					if ((directionDistance[thisDirection] == undefined) || (distance > directionDistance[thisDirection])) {
+					if ((directionDistance[thisDirection] == undefined) || (directionDistance[thisDirection] > distance)) {
 						directionDistance[thisDirection] = distance;
 						_direction[thisDirection] = orientatedCameras[i];
 						directionSet++;
@@ -293,6 +302,24 @@ function PhotoSynthViewer(div, frame, sound) {
 		
 		/* rotations */
 		getCloseRotations(closeRotatedCameras);
+	}
+	
+	function test() {
+		
+		for (var k = 0; k < 4; k++) {  // got through each direction
+			
+			for (var j = 0; j < 4; j++) { 
+				
+				
+				var thisOrientation = _directions[k];
+				var worldDirection = _directions[j];
+				var rot = relativeQuaternion(thisOrientation, worldDirection);
+			    var angle = vToDegrees(QuaternionToEuler(rot));			
+				var thisDirection = getDirection(rot);
+				alert("looking " + _directionNames[k] + " and the object is in the world to the " + _directionNames[j] + " and relative direction is calculated to be "+ _directionNames[thisDirection]);
+		
+			}
+		}
 		
 	}
 	
@@ -371,9 +398,13 @@ function PhotoSynthViewer(div, frame, sound) {
 		return true;
 	}
 	
-	// work out which direction this is
+	/* 
+	 * work out which direction this is
+	 * this isn't perfect, because we are using calculated Euler values rather than plane offsets.
+	 * i.e. If x > 45 then we are facing wrong direction,
+	 * but if y > 45 it makes little difference 
+	 */
 	function getDirection(rot) {
-		// set empty variables for which direction
 		var lowestAngle; 
 		var directionIndex;
 
@@ -383,11 +414,10 @@ function PhotoSynthViewer(div, frame, sound) {
 			var yDeviation = Math.abs(angle.y);
 			var xDeviation = Math.abs(angle.x);
 			var zDeviation = Math.abs(angle.z);
-			//if ((45 > yDeviation) && (45 > xDeviation) && (45 > zDeviation) )  {
-			if (45 > yDeviation)  {
-				if ((directionIndex == undefined) || (lowestAngle > yDeviation)) {
+			if ((45 > xDeviation) && (45 > zDeviation) )  { 
+				if ((directionIndex == undefined) || (lowestAngle > zDeviation)) {
 					directionIndex = k;
-					lowestAngle = yDeviation;
+					lowestAngle = zDeviation;
 				}
 			}
 		}
@@ -415,7 +445,7 @@ function PhotoSynthViewer(div, frame, sound) {
 	
 	// 2 Vectors to Quat from : https://github.com/mrdoob/three.js/issues/382 (with fix)
 		function lookat (vecStart, vecEnd, vecUp) {
-	       var up = vecUp || new THREE.Vector3(0, 1, 0);
+	       var up = vecUp || new THREE.Vector3(0, 0, 1); 
 	       var temp = new THREE.Matrix4();
 	       temp.lookAt(vecEnd, vecStart, up);
 
@@ -715,7 +745,7 @@ function PhotoSynthViewer(div, frame, sound) {
 	}
 	
 	// josh: works out Euler angles (ported from: http://forums.create.msdn.com/forums/p/4574/232603.aspx#232603 )
-	function brokenQuaternionToEuler(q) 
+	function QuaternionToEuler(q) 
         { 
             var v = new THREE.Vector3();
  
@@ -752,12 +782,12 @@ function PhotoSynthViewer(div, frame, sound) {
         }  
 
 	//to fix odd mixup of x and y
-	function QuaternionToEuler(q) {
+	/*function QuaternionToEuler(q) {
 		var temp = brokenQuaternionToEuler(q);
 		
 		return new THREE.Vector3(temp.y, temp.x, temp.z);
 		
-	}
+	}*/
 	
 	//josh: vector to Degrees
 	function vToDegrees(v) {
