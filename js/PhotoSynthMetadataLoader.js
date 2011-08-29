@@ -128,12 +128,12 @@ function PhotoSynthMetadataLoader(guid, options) {
 	}
 	
 	// gets nearest, then look around a bit further for other points
-	this.getNearby = function(coordSystemIndex, cameraIndex, percentage) {
+	this.getNearby = function(coordSystemIndex, cameraIndex, searchDistance) {
 		var cameraIndexes = []; // initialise an empty array
 		var originCamera = _coords[coordSystemIndex].cameras[cameraIndex];
 		
 		
-		var searchDistance = this.getDistanceToNearestCamera(coordSystemIndex, cameraIndex);
+		//var searchDistance = this.getDistanceToNearestCamera(coordSystemIndex, cameraIndex);
 		
 		
 		if (searchDistance !== undefined) {
@@ -141,8 +141,8 @@ function PhotoSynthMetadataLoader(guid, options) {
 			for (var i = 0; i < _coords[coordSystemIndex].cameras.length; i++) {
 				if ((i != cameraIndex) && (_coords[coordSystemIndex].cameras[i] !== undefined)) {
 						var testDistance = this.lineDistance(originCamera, _coords[coordSystemIndex].cameras[i]);
-						if (testDistance <= ((searchDistance * (100 + percentage))/ 100)) {
-						//if (testDistance <= searchDistance) {
+						//if (testDistance <= ((searchDistance * (100 + percentage))/ 100)) {
+						if (testDistance <= searchDistance) {
 							// add this camera
 							cameraIndexes.push(i);
 						}

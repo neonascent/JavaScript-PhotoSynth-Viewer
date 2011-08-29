@@ -1,4 +1,10 @@
-﻿function PhotoSynthViewer(div, frame, sound) {
+﻿/*
+ * Todo: fix wayfinder cardinals and non-close rotations.
+ * (only effects some synths; works on 38a79f4e-d2b3-42ae-861d-a38dc2cfa8e5)
+ */
+
+
+function PhotoSynthViewer(div, frame, sound) {
 	
 	var _div        = div;
 	var _container  = div.getElementsByClassName("canvas-container")[0];
@@ -21,7 +27,7 @@
 	var _stats;
 	var _loader;	
 	
-	var _similarAngle = 15; // +- 10 degrees 
+	var _similarAngle = 10; // +- 10 degrees 
 	var _thumbs;
 	
 	var _guid;
@@ -42,7 +48,7 @@
 	var _imageWidth;
 	var _imageHeight;
 	
-	var _searchDistance = 500;
+	var _searchDistance = .7;
 	
 	// directions
 	var _directions = 	[new THREE.Quaternion(0, 0, 0, 1), new THREE.Quaternion(0, 0, -0.707, 0.707), new THREE.Quaternion(0, 0, 1, 0),  new THREE.Quaternion(0, 0, 0.707, 0.707)] ; // forward, right, back, left down Z
@@ -181,6 +187,10 @@
 	
 	
 	// can "cache" many of these things.  Nearest cameras, possible angles, etc. 
+	
+	// movement doesn't have reciprocity (which is okay because we go on camera orientation)
+	// rotation should be reciprical and isn't. 
+	
 	function getDirections() {
 		
 		// get current camera
@@ -197,6 +207,7 @@
 		// first look at ones that are close in orientation.  Put others in other group  
 		var orientatedCameras = [];
 		var rotatedCameras = [];
+		var closeRotatedCameras = [];
 		
 		var counter = 0;
 		for (var j = _searchDistance; counter < 6 ; j = j + (j * 0.5)) {
@@ -208,14 +219,20 @@
 					var testCameraOrientation = new THREE.Quaternion(testCamera.orientation[0], testCamera.orientation[1], testCamera.orientation[2], testCamera.orientation[3]);
 					var relativeOrientationEulerDegrees = vToDegrees( QuaternionToEuler( relativeQuaternion(currentOrientation, testCameraOrientation) ) );
 					
-					if ((-_similarAngle > relativeOrientationEulerDegrees.x) || (relativeOrientationEulerDegrees.x  >  _similarAngle) || (-_similarAngle > relativeOrientationEulerDegrees.y) || (relativeOrientationEulerDegrees.y  >  _similarAngle) || (-_similarAngle > relativeOrientationEulerDegrees.z) || (relativeOrientationEulerDegrees.z  >  _similarAngle)) {
+					if ((-_similarAngle > relativeOrientationEulerDegrees.x) || (relativeOrientationEulerDegrees.x  >  _similarAngle) || (-_similarAngle > relativeOrientationEulerDegrees.y) || (relativeOrientationEulerDegrees.y  >  _similarAngle) || (-_similarAngle > relativeOrientationEulerDegrees.z) || (relativeOrientationEulerDegrees.z  >  _similarAngle)) {										
 						// if camera is rotated more than _similarAngle, and it's close
-						if (j == _searchDistance) {
-							rotatedCameras.push(listCameras[i]);
+						if (counter == 0) {
+							closeRotatedCameras.push(listCameras[i]);
+						} else {
+							if (!(rotatedCameras.has(listCameras[i]))) {
+								rotatedCameras.push(listCameras[i]);
+							}
 						}
 					} else {
 						//alert("similar orientation: camera "+ listCameras[i] + " : " + relativeOrientationEulerDegrees.x + " " + relativeOrientationEulerDegrees.y + " " + relativeOrientationEulerDegrees.z );
-						orientatedCameras.push(listCameras[i]);
+						if (!(orientatedCameras.has(listCameras[i]))) {
+							orientatedCameras.push(listCameras[i]);
+						}
 					}
 				}
 				
@@ -228,7 +245,8 @@
 			// work out direction 
 			// problem with this when cameras are very close to each other, cause very small height changes become significant.
 
-			
+			// get rotated cameras
+			// in orientatedCameras, uses _direction, out to _direction
 			for (var i = 0; i < orientatedCameras.length; i++) {
 				var thisCamera = _loader.getCamera(_currentCoordIndex, orientatedCameras[i]);
 				// work out direction quat
@@ -260,33 +278,8 @@
 			
 			
 			
-			//_similarAngle
-			// these are z-ais down!  Need to reverse
 			
-			// second bit: rotations
-			for (var i = 0; i < rotatedCameras.length; i++) {
-				// find relative rotations 
-				var thisCamera = _loader.getCamera(_currentCoordIndex, rotatedCameras[i]);
-				var thisOrientation = new THREE.Quaternion(thisCamera.orientation[0], thisCamera.orientation[1], thisCamera.orientation[2], thisCamera.orientation[3]);
-				var rot = relativeQuaternion(currentOrientation, thisOrientation);
-				//rot.multiplySelf(_qx);
-				
-				var angle = vToDegrees(QuaternionToEuler(rot));
-				
-				// just do z at the moment (rotate xy) 
-				if ((-_similarAngle > angle.z) || (angle.z  >  _similarAngle)) {
-					// this is a significant z-axis rotation
-					if ((0 > angle.z) && ((directionDistance[4] == undefined) || (directionDistance[4] < angle.z))) {
-						directionDistance[4] = angle.z;
-						_direction[4] = rotatedCameras[i];
-					} 
-					if ((angle.z > 0) && ((directionDistance[5] == undefined) || (angle.z < directionDistance[5]))) {
-						directionDistance[5] = angle.z;
-						_direction[5] = rotatedCameras[i];
-					} 
-				}
 
-			}
 			
 			if (directionSet > 2) {
 				break;
@@ -295,8 +288,13 @@
 		}
 	
 		
+		//_similarAngle
+		// these are z-ais down!  Need to reverse
+		
+		/* rotations */
+		getCloseRotations(closeRotatedCameras);
+		
 	}
-
 	
 	// move in a direction
 	this.movement = function(d) {
@@ -340,6 +338,39 @@
 		
 	}
 	
+	/*
+	 * These are for close points. considered "coexistent" i.e. on top of each other, so privelege rotation. 
+	 */
+	function getCloseRotations(rotatedCameras) {
+		var directionDistance = [];
+		var currentCamera = _loader.getCamera(_currentCoordIndex, _currentCameraIndex);
+		var currentOrientation = new THREE.Quaternion(currentCamera.orientation[0], currentCamera.orientation[1], currentCamera.orientation[2], currentCamera.orientation[3]);
+		
+		for (var i = 0; i < rotatedCameras.length; i++) {
+			// find relative rotations 
+			var thisCamera = _loader.getCamera(_currentCoordIndex, rotatedCameras[i]);
+			var thisOrientation = new THREE.Quaternion(thisCamera.orientation[0], thisCamera.orientation[1], thisCamera.orientation[2], thisCamera.orientation[3]);
+			var rot = relativeQuaternion(currentOrientation, thisOrientation);
+			
+			var angle = vToDegrees(QuaternionToEuler(rot));
+			
+			// just do z at the moment (rotate xy) 
+			if ((170 > Math.abs(angle.x)) && (170 > Math.abs(angle.y))) { // if not rotated in opposite direction
+				if ((-_similarAngle > angle.z) || (angle.z  >  _similarAngle)) { // then if this is a significant z-axis rotation
+					if ((0 > angle.z) && ((directionDistance[4] == undefined) || (directionDistance[4] < angle.z))) {
+						directionDistance[4] = angle.z;
+						_direction[4] = rotatedCameras[i];
+					} 
+					if ((angle.z > 0) && ((directionDistance[5] == undefined) || (angle.z < directionDistance[5]))) {
+						directionDistance[5] = angle.z;
+						_direction[5] = rotatedCameras[i];
+					} 
+				}
+			}
+		}
+		return true;
+	}
+	
 	// work out which direction this is
 	function getDirection(rot) {
 		// set empty variables for which direction
@@ -350,6 +381,9 @@
 			
 			var angle = vToDegrees(QuaternionToEuler(relativeQuaternion(_directions[k], rot)));
 			var yDeviation = Math.abs(angle.y);
+			var xDeviation = Math.abs(angle.x);
+			var zDeviation = Math.abs(angle.z);
+			//if ((45 > yDeviation) && (45 > xDeviation) && (45 > zDeviation) )  {
 			if (45 > yDeviation)  {
 				if ((directionIndex == undefined) || (lowestAngle > yDeviation)) {
 					directionIndex = k;
@@ -366,7 +400,18 @@
 		}
 		
 	} 
-		
+
+	Array.prototype.indexOf = function(obj) {
+		  for (var i = 0; i < this.length; i++) {
+		    if (this[i] == obj)
+		      return i;
+		  }
+		  return -1;
+		}
+
+	Array.prototype.has = function(obj) {
+	  return this.indexOf(obj) >= 0;
+	}
 	
 	// 2 Vectors to Quat from : https://github.com/mrdoob/three.js/issues/382 (with fix)
 		function lookat (vecStart, vecEnd, vecUp) {
