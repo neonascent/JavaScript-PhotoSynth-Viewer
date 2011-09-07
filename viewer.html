@@ -22,8 +22,14 @@
 <!DOCTYPE html>
 <html>
 	<head>
+	<title>MystRecon</title>
 	<!-- set up size for iPhone and iPad -->
-	<meta name="viewport" content="height=560px,width=460px" /> <!-- ,initial-scale=1,user-scalable=no -->
+	<meta name="viewport" content="width=device-width,height=device-height,user-scalable=no" /> <!-- ,initial-scale=1,user-scalable=no -->
+	<meta name="apple-mobile-web-app-capable" content="yes" /> <!-- allows fullscreen as Home Screen link on iphone -->
+	<!-- 	<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" />
+	<meta name="apple-mobile-web-app-capable" content="yes" /> -->
+
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	
 	<script src="js/prototype.js"></script>
 	<script src="js/Three.js"></script>
@@ -49,11 +55,11 @@
 		
 		var parentDiv = document.createElement("div");
 		parentDiv.style.backgroundColor = "black";
-		parentDiv.style.width = "360px"; // 100%
-		parentDiv.style.height = "560px";
+		//parentDiv.style.width = "360px"; // 100%
+		//parentDiv.style.height = "560px";
 		
 		var nbAllow = 60;
-		var imageWidth = 340;
+		//var imageWidth = 340;
 		
 		var gui = document.createElement("div");
 		gui.setAttribute("id", "gui");
@@ -61,7 +67,8 @@
 		
 		
 		var div = document.createElement("div");
-		div.setAttribute("style", "width: "+imageWidth+"px; height: 585px; float: left");					
+		//div.setAttribute("style", "width: "+imageWidth+"px; height: 585px; float: left");					
+		div.setAttribute("style", "float: left");
 		
 		var loaderInfo = document.createElement("div");
 		loaderInfo.setAttribute("class", "loader-info");
@@ -157,15 +164,18 @@
 			    } else if ( (_viewer.getImageWidth() > up_x) && ( up_y > (_viewer.getImageHeight()-nbAllow) ) ) { // back
 					_viewer.movement("b");
 			    }
-			    
+
+        	_viewer.playSound();
 		}
 
 		function slide_right() {
-			_viewer.movement("rr");
+		    _viewer.movement("rr");
+		    _viewer.playSound();
 		}
 		
 		function slide_left() {
-			_viewer.movement("rl");
+		    _viewer.movement("rl");
+		    _viewer.playSound();
 		}
 				
 		div.appendChild(loaderInfo);
@@ -218,7 +228,7 @@
 		if (guid != "") { //Silverlight is desactivated and were are on a page with a viewable synth
 			
 			createInlineWebGLViewer(displayDiv, guid);
-			_viewer = new PhotoSynthViewer(document.getElementById("gui"), true, true);
+			_viewer = new PhotoSynthViewer(document.getElementById("gui"), false, true); // useframe usesound
 			_viewer.load(guid);
 			
 		}

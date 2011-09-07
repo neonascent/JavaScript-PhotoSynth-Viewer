@@ -153,6 +153,20 @@ function PhotoSynthMetadataLoader(guid, options) {
 	}
 
 
+    // gets nearest, then look around a bit further for other points
+	this.getAll = function(coordSystemIndex) {
+		var cameraIndexes = []; // initialise an empty array
+
+
+		for (var i = 0; i < _coords[coordSystemIndex].cameras.length; i++) {
+			if (_coords[coordSystemIndex].cameras[i] !== undefined) {
+				cameraIndexes.push(i);
+			}
+		} 
+
+		return cameraIndexes;
+	}
+
 	this.loadCoordSystem = function(coordSystemIndex, options) {
 		new PhotoSynthLoader(_that, coordSystemIndex, options);
 	};

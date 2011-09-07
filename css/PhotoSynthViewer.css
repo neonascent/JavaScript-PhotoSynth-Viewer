@@ -3,7 +3,7 @@ body {background-color: black;}
 #gui {
 	font-family: verdana; 
 	font-size: 13px;
-	width: 360px; /*100%*/
+	/*width: 360px; /*100%*/
 	margin: auto;
 }
 
@@ -33,8 +33,8 @@ body {background-color: black;}
 }
 
 #gui div.canvas-container {
-	width: 340px;
-	height: 480px;
+	/*width: 340px;*/
+	/*height: 480px;*/
 	background-color: black;/*#7f7f7f;*/
 	padding-top: 30px;
 }
