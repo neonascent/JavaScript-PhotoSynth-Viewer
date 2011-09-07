@@ -132,6 +132,7 @@
 			down_x = event.touches[0].pageX;
 			up_x = down_x;
 			up_y = event.touches[0].pageY;
+			_viewer.playSound();
 		});
 		
 		Event.observe(canvasContainer, 'touchmove', function(event) {
@@ -165,17 +166,14 @@
 					_viewer.movement("b");
 			    }
 
-        	_viewer.playSound();
 		}
 
 		function slide_right() {
 		    _viewer.movement("rr");
-		    _viewer.playSound();
 		}
 		
 		function slide_left() {
 		    _viewer.movement("rl");
-		    _viewer.playSound();
 		}
 				
 		div.appendChild(loaderInfo);

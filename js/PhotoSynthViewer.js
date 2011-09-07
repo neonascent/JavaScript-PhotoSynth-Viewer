@@ -58,7 +58,7 @@ function PhotoSynthViewer(div, frame, sound) {
 	var _imageWidth;
 	var _imageHeight;
 	
-	var _searchDistance = .7;
+	var _searchDistance = .7;  // need more dynamic method of searching really
 	
 	// directions
 	var _directions = 	[new THREE.Quaternion(0, 1, 0, 0), new THREE.Quaternion(0, -0.707, 0, 0.707), new THREE.Quaternion(0, 0, 0, 1),  new THREE.Quaternion(0, 0.707, 0, 0.707)] ; // forward, right, back, left down Z
@@ -225,36 +225,12 @@ function PhotoSynthViewer(div, frame, sound) {
 		// first look at ones that are close in orientation.  Put others in other group  
 		var orientatedCameras = [];
 		var rotatedCameras = [];
+		var orientatedCamerasDone = [];
+		var rotatedCamerasDone = [];
 		var closeRotatedCameras = [];
-
-        // create list
-		var msCamera = 'startCamera = matrix3 [1,0,0] [0,-1,0] [0,0,-1] [0,0,0]\n';
-		msCamera = msCamera + 'sideCamera = matrix3 [0,1,0] [1,0,0] [0,0,-1] [0,0,0]\n';
-		msCamera = msCamera + 'sideCamera = matrix3 [0,1,0] [1,0,0] [0,0,-1] [0,0,0]\n';
-		msCamera = msCamera + 't = matrix3 [1,0,0] [0,1,0] [0,0,1] [0,0,0]\n';
-		msCamera = msCamera + 'R = matrix3 [1,0,0] [0,1,0] [0,0,1] [0,0,0]\n';
-		msCamera = msCamera + '\n';
-
-		// current searching camera
-		msCamera = msCamera + 'Camera' + _currentCameraIndex + ' = freecamera name: "' + _currentCameraIndex + '_searching" \n';
-		msCamera = msCamera + 'Camera' + _currentCameraIndex + '.rotation = quat ' + currentOrientation.x + ' ' + currentOrientation.y + ' ' + currentOrientation.z + ' ' + currentOrientation.w + '\n';
-		msCamera = msCamera + 'Camera' + _currentCameraIndex + '.transform = startCamera * Camera' + _currentCameraIndex + '.transform \n';
-		msCamera = msCamera + 'Camera' + _currentCameraIndex + '.pos = [' + currentCamera.position[0] + ', ' + currentCamera.position[1] + ', ' + currentCamera.position[2] + ']\n';
-		msCamera = msCamera + '\n';
-
-		// directions
-		for (var k = 0; k < 4; k++) {
-
-		    var aD = relativeQuaternion(_directions[k], _qx);
-            msCamera = msCamera + _directionNames[k] +' = freecamera name: "' +_directionNames[k] + '" \n';
-            msCamera = msCamera + _directionNames[k] + '.rotation = quat ' + aD.x + ' ' + aD.y + ' ' + aD.z + ' ' + aD.w + '\n';
-		    msCamera = msCamera + _directionNames[k] + '.transform = startCamera * ' + _directionNames[k] + '.transform \n';
-		    msCamera = msCamera + '\n';
-		}
-
-        
+      
 		var counter = 0;
-		for (var j = _searchDistance; counter < 6 ; j = j + (j * 0.5)) {
+		for (var j = _searchDistance; counter < 10 ; j = j + (j * 0.5)) {
 			var listCameras = _loader.getNearby(_currentCoordIndex, _currentCameraIndex, j);
 			for (var i = 0; i < listCameras.length; i++) {
 				// get camera relative orientations
@@ -282,114 +258,57 @@ function PhotoSynthViewer(div, frame, sound) {
 				
 			} // endfor
 			
-			// now look a translations with similar orientation
-			// get relative direction
 		
-			
-			// work out direction 
-			// problem with this when cameras are very close to each other, cause very small height changes become significant.
-
-
-
 			var string = getMaxScript(_currentCoordIndex);
 
 
             
 			// in orientatedCameras, uses _direction, out to _direction
 			for (var i = 0; i < orientatedCameras.length; i++) {
-				var thisCamera = _loader.getCamera(_currentCoordIndex, orientatedCameras[i]);
-				// work out direction quat
-
-                // nearby cameras
-				msCamera = msCamera + 'Camera' + orientatedCameras[i] + ' = freecamera name: "' + orientatedCameras[i] + '" \n';
-				msCamera = msCamera + 'Camera' + orientatedCameras[i] + '.rotation = quat ' + thisCamera.orientation[0] + ' ' + thisCamera.orientation[1] + ' ' + thisCamera.orientation[2] + ' ' + thisCamera.orientation[3] + '\n';
-				msCamera = msCamera + 'Camera' + orientatedCameras[i] + '.transform = startCamera * Camera' + orientatedCameras[i] + '.transform \n';
-				msCamera = msCamera + 'Camera' + orientatedCameras[i] + '.pos = [' + thisCamera.position[0] + ', ' + thisCamera.position[1] + ', ' + thisCamera.position[2] + ']\n';
-				msCamera = msCamera + '\n';
-
-				// 1. create start and end points
-				var startVec = new THREE.Vector3(currentCamera.position[0], currentCamera.position[1], currentCamera.position[2]); 
-				var endVec = new THREE.Vector3(thisCamera.position[0], thisCamera.position[1], thisCamera.position[2]);
-				
-				// 2. move start and end so that start is origin
-				endVec.x = endVec.x - startVec.x;
-				endVec.y = endVec.y - startVec.y;
-				endVec.z = endVec.z - startVec.z;		
-				
-				// 3. lookat quat in world coordinates
-				var quat = lookat(new THREE.Vector3(), endVec);
+			    if (!(orientatedCamerasDone.has(orientatedCameras[i]))) {
 
 
-                
-				// lookat calculation
-				msCamera = msCamera + 'Camera' + orientatedCameras[i] + 'b = freecamera name: "' + orientatedCameras[i] + '_lookat" \n';
-				msCamera = msCamera + 'Camera' + orientatedCameras[i] + 'b.rotation = quat ' + quat.x + ' ' + quat.y + ' ' + quat.z + ' ' + quat.w + '\n';
-				msCamera = msCamera + 'Camera' + orientatedCameras[i] + 'b.transform = startCamera * Camera' + orientatedCameras[i] + 'b.transform \n';
-				msCamera = msCamera + '\n';
+			        var thisCamera = _loader.getCamera(_currentCoordIndex, orientatedCameras[i]);
+			        // work out direction quat
 
+			        // 1. create start and end points
+			        var startVec = new THREE.Vector3(currentCamera.position[0], currentCamera.position[1], currentCamera.position[2]);
+			        var endVec = new THREE.Vector3(thisCamera.position[0], thisCamera.position[1], thisCamera.position[2]);
 
-				// 4. work out relative quat from orientation to endVec 
-                // qy then rotate again?
-				var rot1 = relativeQuaternion(quat, _qx);
-				var rot2 = relativeQuaternion(currentOrientation, _qx);
-				var rot = relativeQuaternion(rot1, rot2);
+			        // 2. move start and end so that start is origin
+			        endVec.x = endVec.x - startVec.x;
+			        endVec.y = endVec.y - startVec.y;
+			        endVec.z = endVec.z - startVec.z;
 
-				// relative calculation
-				msCamera = msCamera + 'Camera' + orientatedCameras[i] + 'c = freecamera name: "' + orientatedCameras[i] + '_rotation" \n';
-				msCamera = msCamera + 'Camera' + orientatedCameras[i] + 'c.rotation = quat ' + rot.x + ' ' + rot.y + ' ' + rot.z + ' ' + rot.w + '\n';
-				msCamera = msCamera + 'Camera' + orientatedCameras[i] + 'c.transform = startCamera * Camera' + orientatedCameras[i] + 'c.transform \n';
-				msCamera = msCamera + '\n';
+			        // 3. lookat quat in world coordinates
+			        var quat = lookat(new THREE.Vector3(), endVec);
+                    
+			        // 4. work out relative quat from orientation to endVec 
+			        // qy then rotate again?
+			        var rot1 = relativeQuaternion(quat, _qx);
+			        var rot2 = relativeQuaternion(currentOrientation, _qx);
+			        var rot = relativeQuaternion(rot1, rot2);
+
+			        // 5. find what cardinal is closest
+			        var thisDirection = getDirection(rot);
+
+			        var distance = _loader.lineDistance(currentCamera, thisCamera);
+
+			        // work out which direction this is
+			        if (thisDirection !== false) {
+			            // if this has a direction, check if it is closer, and update
+			            if ((directionDistance[thisDirection] == undefined) || (directionDistance[thisDirection] > distance)) {
+			                directionDistance[thisDirection] = distance;
+			                _direction[thisDirection] = orientatedCameras[i];
+			                directionSet++;
+			            }
+			        }
 
                 
-				var lowestAngle;
-				var directionIndex;
+			        orientatedCamerasDone.push(orientatedCameras[i]);  // mark as done
 
-				for (var k = 0; k < 4; k++) {
-
-				    var tryQuat = relativeQuaternion(_directions[k], rot);
-
-				    var angle = vToDegrees(QuaternionToEuler(tryQuat));
-				    var yDeviation = Math.abs(angle.y);
-				    var xDeviation = Math.abs(angle.x);
-				    var zDeviation = Math.abs(angle.z);
-				    if ((45 > xDeviation) && (45 > zDeviation)) {
-				        if ((directionIndex == undefined) || (lowestAngle > xDeviation)) {
-				            directionIndex = k;
-				            lowestAngle = xDeviation;
-				        }
-				    }
-				}
-
-
-				var direction = _directionNames[directionIndex];
-
-
-                // chosen
-				var tryQuat = relativeQuaternion(_directions[directionIndex], rot);
-
-
-				// tryQuat calculation
-				msCamera = msCamera + 'Camera' + _currentCameraIndex + 'to' + orientatedCameras[i] + '_chosen_' + direction + ' = freecamera name: "' + _currentCameraIndex + 'to' + orientatedCameras[i] + '_chosen_' + direction + '" \n';
-				msCamera = msCamera + 'Camera' + _currentCameraIndex + 'to' + orientatedCameras[i] + '_chosen_' + direction + '.rotation = quat ' + tryQuat.x + ' ' + tryQuat.y + ' ' + tryQuat.z + ' ' + tryQuat.w + '\n';
-				msCamera = msCamera + 'Camera' + _currentCameraIndex + 'to' + orientatedCameras[i] + '_chosen_' + direction + '.transform = startCamera * Camera' + _currentCameraIndex + 'to' + orientatedCameras[i] + '_chosen_' + direction + '.transform \n';
-				msCamera = msCamera + '\n';
-
-                
-            	// 5. find what cardinal is closest
-				var thisDirection = getDirection(rot);   
-				 
-                 var distance =  _loader.lineDistance(currentCamera, thisCamera);
-							
-				// work out which direction this is
-				if (thisDirection !== false ) {
-					// if this has a direction, check if it is closer, and update
-					if ((directionDistance[thisDirection] == undefined) || (directionDistance[thisDirection] > distance)) {
-						directionDistance[thisDirection] = distance;
-						_direction[thisDirection] = orientatedCameras[i];
-						directionSet++;
-					}
-				}		
-			}
+			    } // not already done !orientatedCamerasDone.has...
+			} // for orientatedCameras
 			
 			
 			
@@ -402,13 +321,6 @@ function PhotoSynthViewer(div, frame, sound) {
 			counter++;
 		}
 		
-		//_similarAngle
-		// these are z-ais down!  Need to reverse
-
-
-        msCamera = msCamera + 'selectionSets["lookat"] = $*_lookat\n';
-        msCamera = msCamera + 'selectionSets["rotation"] = $*_rotation\n';
-
 		/* rotations */
 		getCloseRotations(closeRotatedCameras);
 	}
@@ -547,22 +459,24 @@ function PhotoSynthViewer(div, frame, sound) {
 	 * but if y > 45 it makes little difference 
 	 */
 	function getDirection(rot) {
-		var lowestAngle; 
-		var directionIndex;
+	    var lowestAngle;
+	    var directionIndex;
 
-		for (var k = 0; k < 4; k++) {
-			
-			var angle = vToDegrees(QuaternionToEuler(relativeQuaternion(_directions[k], rot)));
-			var yDeviation = Math.abs(angle.y);
-			var xDeviation = Math.abs(angle.x);
-			var zDeviation = Math.abs(angle.z);
-			if ((45 > xDeviation) && (45 > zDeviation) )  { 
-				if ((directionIndex == undefined) || (lowestAngle > zDeviation)) {
-					directionIndex = k;
-					lowestAngle = zDeviation;
-				}
-			}
-		}
+	    for (var k = 0; k < 4; k++) {
+
+	        var tryQuat = relativeQuaternion(_directions[k], rot);
+
+	        var angle = vToDegrees(QuaternionToEuler(tryQuat));
+	        var yDeviation = Math.abs(angle.y);
+	        var xDeviation = Math.abs(angle.x);
+	        var zDeviation = Math.abs(angle.z);
+	        if ((45 > xDeviation) && (45 > zDeviation)) {
+	            if ((directionIndex == undefined) || (lowestAngle > xDeviation)) {
+	                directionIndex = k;
+	                lowestAngle = xDeviation;
+	            }
+	        }
+	    }
 		
 		if (directionIndex !== undefined) {
 			//alert(_directionNames[directionIndex]);
