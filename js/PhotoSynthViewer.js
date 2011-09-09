@@ -237,6 +237,7 @@ function PhotoSynthViewer(div, frame, sound) {
 		
 		// set up direction placeholders
 		var directionSet = 0;
+		var rotationSet = false;
 		_direction = [-1,-1,-1,-1,-1,-1];
 		var directionDistance = [];
 		
@@ -247,7 +248,6 @@ function PhotoSynthViewer(div, frame, sound) {
 		var rotatedCameras = [];
 		var orientatedCamerasDone = [];
 		var rotatedCamerasDone = [];
-		var closeRotatedCameras = [];
       
 		var counter = 0;
 		for (var j = _searchDistance; counter < 10 ; j = j + (j * 0.5)) {
@@ -261,16 +261,12 @@ function PhotoSynthViewer(div, frame, sound) {
 					
 					if ((-_similarAngle > relativeOrientationEulerDegrees.x) || (relativeOrientationEulerDegrees.x  >  _similarAngle) || (-_similarAngle > relativeOrientationEulerDegrees.y) || (relativeOrientationEulerDegrees.y  >  _similarAngle) || (-_similarAngle > relativeOrientationEulerDegrees.z) || (relativeOrientationEulerDegrees.z  >  _similarAngle)) {										
 						// if camera is rotated more than _similarAngle, and it's close
-						if (counter == 0) {
-							closeRotatedCameras.push(listCameras[i]);
-						} else {
-							if (!(rotatedCameras.has(listCameras[i]))) {
-								rotatedCameras.push(listCameras[i]);
-							}
+						if (!(rotatedCamerasDone.has(listCameras[i]))) {
+							rotatedCameras.push(listCameras[i]);
 						}
 					} else {
 						//alert("similar orientation: camera "+ listCameras[i] + " : " + relativeOrientationEulerDegrees.x + " " + relativeOrientationEulerDegrees.y + " " + relativeOrientationEulerDegrees.z );
-						if (!(orientatedCameras.has(listCameras[i]))) {
+						if (!(orientatedCamerasDone.has(listCameras[i]))) {
 							orientatedCameras.push(listCameras[i]);
 						}
 					}
@@ -279,15 +275,31 @@ function PhotoSynthViewer(div, frame, sound) {
 			} // endfor
 			
 		
-			var string = getMaxScript(_currentCoordIndex);
+			//var string = getMaxScript(_currentCoordIndex);
 
 
+            // rotations
+			if (!rotationSet) {
+
+			    var newRotations = getClosestRotations(rotatedCameras);
+			    if (newRotations.length > 0) {
+			        if ((_direction[4] == -1) && (newRotations[0] !== undefined)) {
+			            _direction[4] = newRotations[0];
+			        }
+			        if ((_direction[5] == -1) && (newRotations[1] !== undefined)) {
+			            _direction[5] = newRotations[1];
+			        }
+			        rotationSet = true;
+			    }
+
+
+			    rotatedCamerasDone = rotatedCamerasDone.concat(rotatedCameras);
+			    rotatedCameras = [];
+			}
             
 			// in orientatedCameras, uses _direction, out to _direction
-			for (var i = 0; i < orientatedCameras.length; i++) {
-			    if (!(orientatedCamerasDone.has(orientatedCameras[i]))) {
-
-
+			if (2 > directionSet) {
+			    for (var i = 0; i < orientatedCameras.length; i++) {
 			        var thisCamera = _loader.getCamera(_currentCoordIndex, orientatedCameras[i]);
 			        // work out direction quat
 
@@ -302,7 +314,7 @@ function PhotoSynthViewer(div, frame, sound) {
 
 			        // 3. lookat quat in world coordinates
 			        var quat = lookat(new THREE.Vector3(), endVec);
-                    
+
 			        // 4. work out relative quat from orientation to endVec 
 			        // qy then rotate again?
 			        var rot1 = relativeQuaternion(quat, _qx);
@@ -324,25 +336,22 @@ function PhotoSynthViewer(div, frame, sound) {
 			            }
 			        }
 
-                
+
 			        orientatedCamerasDone.push(orientatedCameras[i]);  // mark as done
 
-			    } // not already done !orientatedCamerasDone.has...
-			} // for orientatedCameras
-			
-			
-			
-			
 
-			
+			    } // for orientatedCameras
+			    orientatedCameras = [];  // clear cameras
+			} // no more directions needed
+
+
+
+			// conditions 
 			if (directionSet > 2) {
 				break;
 			}
 			counter++;
 		}
-		
-		/* rotations */
-		getCloseRotations(closeRotatedCameras);
 	}
 
 	/*
@@ -384,8 +393,9 @@ function PhotoSynthViewer(div, frame, sound) {
 	/*
 	* These are for close points. considered "coexistent" i.e. on top of each other, so privelege rotation. 
 	*/
-	function getCloseRotations(rotatedCameras) {
-		var directionDistance = [];
+	function getClosestRotations(rotatedCameras) {
+	    var localDistance = [];
+        var directionDistance = [];
 		var currentCamera = _loader.getCamera(_currentCoordIndex, _currentCameraIndex);
 		var currentOrientation = new THREE.Quaternion(currentCamera.orientation[0], currentCamera.orientation[1], currentCamera.orientation[2], currentCamera.orientation[3]);
 		
@@ -400,18 +410,18 @@ function PhotoSynthViewer(div, frame, sound) {
 			// just do z at the moment (rotate xy) 
 			if ((170 > Math.abs(angle.x)) && (170 > Math.abs(angle.y))) { // if not rotated in opposite direction
 				if ((-_similarAngle > angle.z) || (angle.z  >  _similarAngle)) { // then if this is a significant z-axis rotation
-					if ((0 > angle.z) && ((directionDistance[4] == undefined) || (directionDistance[4] < angle.z))) {
-						directionDistance[4] = angle.z;
-						_direction[4] = rotatedCameras[i];
+					if ((0 > angle.z) && ((directionDistance[0] == undefined) || (directionDistance[0] < angle.z))) {
+						directionDistance[0] = angle.z;
+						localDistance[0] = rotatedCameras[i];
 					} 
-					if ((angle.z > 0) && ((directionDistance[5] == undefined) || (angle.z < directionDistance[5]))) {
-						directionDistance[5] = angle.z;
-						_direction[5] = rotatedCameras[i];
+					if ((angle.z > 0) && ((directionDistance[1] == undefined) || (angle.z < directionDistance[1]))) {
+						directionDistance[1] = angle.z;
+						localDistance[1] = rotatedCameras[i];
 					} 
 				}
 			}
 		}
-		return true;
+		return localDistance;
 	}
 	
 	/* 
