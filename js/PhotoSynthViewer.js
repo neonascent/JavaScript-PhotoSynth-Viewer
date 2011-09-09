@@ -1,15 +1,14 @@
 ﻿/*
- * Todo: wayfinder cardinals are sometimes off 90 degrees (coordinate systems?)
- * (only effects some synths; works on 38a79f4e-d2b3-42ae-861d-a38dc2cfa8e5)
- * (output from lookat is wrong sometimes)
- * 
- * todo: iphone specific css (full screen, absolute left/top 0px) vs normal (centered)
- * 
- * todo: rotate animations.  (load display:none.  onload shift old image left/right)
- * 
- * todo: fix iphone sound.  
- * 
+ *
+ * todo: look up/down sweep. 
+ *
+ * todo: fix iphone double-touch
+ *
+ * todo: rotate animations. 
+ *   
  * todo: navigation arrows subtly on image (fade? animated gif?)
+ *
+ * todo: remove unneccesary CoverFlow and Accordian code. 
  */
 
 
@@ -75,7 +74,9 @@ function PhotoSynthViewer(div, frame, sound) {
 	var _soundReady = false;
 	var _currentSound;
 	var _currentSoundObject;
-	
+
+	var _imgLoading = '<img src="img/loading.gif" alt="" />';
+
 	
 	this.getCamera = function() {
 		return _camera;
@@ -131,19 +132,14 @@ function PhotoSynthViewer(div, frame, sound) {
 	    // record the current camera index
 	    _currentCameraIndex = cameraIndex;
 	    _currentCoordIndex = coordSystemIndex;
-	    var cam = _loader.getCamera(coordSystemIndex, cameraIndex);
-	    var dstPosition = new THREE.Vector3(cam.position[0], cam.position[1], cam.position[2]);
-	    var dstRotation = new THREE.Quaternion(cam.orientation[0], cam.orientation[1], cam.orientation[2], cam.orientation[3]);
-	    dstRotation.multiplySelf(_qx);
 
-	    //moveCameraTo(dstPosition, dstRotation, options);
-
-	    // just change image
-
-	    getDirections();
 	    var url = _thumbs.thumbs[cameraIndex].url;
 	    _imageHeight = _thumbs.thumbs[cameraIndex].height;
 	    _imageWidth = _thumbs.thumbs[cameraIndex].width;
+	    getDirections();
+
+
+	    // new image content
 	    var frame = "";
 	    if (_useFrame) {
 	        var frameFile;
@@ -152,19 +148,43 @@ function PhotoSynthViewer(div, frame, sound) {
 	        } else {
 	            frameFile = 'landscape-narrow.png';
 	        }
-	        //frame = '<img src="img/'+frameFile+'" height="'+(_imageHeight+3)+'" width="'+_imageWidth+'" style="position: relative;  z-index:10; top:-'+(_imageHeight+3)+'px;" ondragstart="return false" onselectstart="return false"/>';
 	        frame = '<img src="img/' + frameFile + '" height="' + (_imageHeight + 3) + '" width="' + _imageWidth + '" style="position: absolute;  z-index:10; left: 0px; top:0px;" ondragstart="return false" onselectstart="return false"/>';
 	    }
-	    var updateHTML = '<img src="' + url + '" ondragstart="return false" style="position: absolute; left: 0px; top:0px" onselectstart="return false"/>' + frame;
+	    var updateHTML = '<img src="' + url + '" ondragstart="return false" style="position: absolute; left: 0px; top:0px;" onselectstart="return false"/>' + frame;
 	    for (var k = 0; k < 6; k++) {
 	        if (_direction[k] !== -1) {
-	            var iconWidth = (_dIconsPosition[k][0] * _imageWidth) + (_dIconsPosition[k][2] * _iconsize);
-	            var iconHeight = (_dIconsPosition[k][1] * _imageHeight) + (_dIconsPosition[k][3] * _iconsize);
-
-	            updateHTML = updateHTML + '<img alt="' + _direction[k] + '" title="' + _direction[k] + '" src="img/' + _dIcons[k] + '" style="position: absolute;  z-index:20; left:' + iconWidth + 'px; top:' + iconHeight + 'px;"  alt="" />';
+	            var iconLeft = (_dIconsPosition[k][0] * _imageWidth) + (_dIconsPosition[k][2] * _iconsize);
+	            var iconTop = (_dIconsPosition[k][1] * _imageHeight) + (_dIconsPosition[k][3] * _iconsize);
+	            updateHTML = updateHTML + '<img alt="' + _direction[k] + '" title="' + _direction[k] + '" src="img/' + _dIcons[k] + '" style="position: absolute;  z-index:20; left: ' + iconLeft + 'px; top:' + iconTop + 'px;" />';
+	            // hidden pre-load images
+	            var urlOther = _thumbs.thumbs[_direction[k]].url;
+	            updateHTML = updateHTML + '<img src="' + urlOther + '" style="display: none;"/>';
 	        }
 	    }
-	    _container.update(updateHTML);
+
+
+
+
+
+
+
+	    // add "loading" and undisplayed new image
+	    var iconLeft = (.5 * _imageWidth) - (.5 * _iconsize);
+	    var iconTop = (.5 * _imageHeight) - (.5 * _iconsize);
+	    _container.insert('<img alt="loading" title="loading" src="img/loading.gif" style="position: absolute;  z-index:30; left: ' + iconLeft + 'px; top:' + iconTop + 'px;" />');
+
+	    // hidden loading image        
+	    var img = new Element('img');
+	    img.onload = function () { _container.update(updateHTML); };
+	    img.setStyle({
+	        display: "none"
+	    });
+	    img.src = url;
+	    _container.insert(img)
+
+
+
+
 
 	};
 
@@ -353,70 +373,12 @@ function PhotoSynthViewer(div, frame, sound) {
 	    return msCamera;
 	}
 
-	function test() {
-	var posList = "";
-	var rotList = "";
-	var angleList = "";
-	for (var x = -1; x < 1.5; x=x+.5) { 
-	for (var y = -1; y < 1.5; y=y+.5) { 
-	for (var z = -1; z < 1.5; z=z+.5) { 
-	var positions = x+","+y+","+z;
-	var rotation = lookat(new THREE.Vector3(),new THREE.Vector3(x,y,z), new THREE.Vector3(0,0,-1));
-	var rot = rotation.x+","+rotation.y+","+rotation.z+","+rotation.w;
-	var angle = vToDegrees(QuaternionToEuler(rotation));
-	var angle = angle.x+","+angle.y+","+angle.z;
-					
-	angleList = angleList + angle + ";";
-	rotList = rotList + rot + ";";
-	posList = posList + positions + ";";
-	}
-	}
-	}
-		
-		
-	var test;
-	}
-	
 	// move in a direction
 	this.movement = function(d) {
 	// check rotation options
-		
-	    switch(d)
-	    {
-	    case "f":
-	    if (_direction[0] !== -1) {
-	    this.moveToCamera(_currentCoordIndex, _direction[0], {});
+	    if (_direction[d] !== -1) {
+	        this.moveToCamera(_currentCoordIndex, _direction[d], {});
 	    }
-	    break;
-	    case "r":
-	    if (_direction[1] !== -1) {
-	    this.moveToCamera(_currentCoordIndex, _direction[1], {});
-	    }
-	    break;		
-	    case "b":
-	    if (_direction[2] !== -1) {
-	    this.moveToCamera(_currentCoordIndex, _direction[2], {});
-	    }
-	    break;
-	    case "l":
-	    if (_direction[3] !== -1) {
-	    this.moveToCamera(_currentCoordIndex, _direction[3], {});
-	    }
-	    break;		
-	    case "rl":
-	    if (_direction[5] !== -1) {
-	    this.moveToCamera(_currentCoordIndex, _direction[5] , {});
-	    }
-	    break;
-	    case "rr":
-	    if (_direction[4] !== -1) {
-	    this.moveToCamera(_currentCoordIndex, _direction[4] , {});
-	    }
-	    break;
-	    default:
-	    }
-		
-		
 	}
 	
 	/*
@@ -542,65 +504,6 @@ function PhotoSynthViewer(div, frame, sound) {
 	       rotation.normalize();
 	       return rotation;
 	   }
-
-    
-	/*this.getCoordSystemAsPly = function(metadataLoader, coordSystemIndex, withCamera) {
-		
-		var coordSystem = metadataLoader.getCoordSystem(coordSystemIndex);
-		var nbVertices  = metadataLoader.getNbVertices(coordSystemIndex);
-		if (withCamera)
-			nbVertices += 2*metadataLoader.getNbCameras(coordSystemIndex);		
-		
-		var output = "";
-		output +="ply\n";
-		output +="format ascii 1.0\n";
-		output +="comment Created using PhotoSynthWebGL Viewer from http://www.visual-experiments.com\n";
-		output +="comment PhotoSynth downloaded from: http://photosynth.net/view.aspx?cid=" + metadataLoader.getSoapInfo().guid + "\n";			
-		output +="element vertex " + nbVertices + "\n";
-		output +="property float x\n";
-		output +="property float y\n";
-		output +="property float z\n";
-		output +="property uchar diffuse_red\n";
-		output +="property uchar diffuse_green\n";
-		output +="property uchar diffuse_blue\n";
-		output +="end_header\n";
-		
-		for (var i=0; i<coordSystem.nbBinFiles; ++i) {
-			var binFile = coordSystem.binFiles[i];
-			for (var j=0; j<binFile.positions.length/3; ++j) {
-				var posx   = binFile.positions[j*3+0];
-				var posy   = binFile.positions[j*3+1];
-				var posz   = binFile.positions[j*3+2];				
-				var colorr = binFile.colors[j*3+0];
-				var colorg = binFile.colors[j*3+1];
-				var colorb = binFile.colors[j*3+2];
-				output += posx + " " + posy + " " + posz + " " + Math.round(colorr*255) + " " + Math.round(colorg*255) + " " + Math.round(colorb*255) + "\n";
-			}						
-		}
-		
-		if (withCamera) {
-			var cameraIndex = 0;
-			
-			var offset = new THREE.Vector3(0.0, 0.0, -0.05);
-			
-			for (var i=0; i<coordSystem.cameras.length; ++i) {
-				if (coordSystem.cameras[i] !== undefined) {
-					var cam = metadataLoader.getCamera(coordSystemIndex, i);
-					var pos = new THREE.Vector3(cam.position[0], cam.position[1], cam.position[2]);
-					if ((cameraIndex % 2) == 0)
-						output += pos.x + " " + pos.y + " " + pos.z + " 0 255 0\n";
-					else
-						output += pos.x + " " + pos.y + " " + pos.z + " 255 0 0\n";					
-					var camInverse = (new THREE.Quaternion(cam.orientation[0], cam.orientation[1], cam.orientation[2], cam.orientation[3])).inverse();
-					var p = (new THREE.Vector3()).add(new THREE.Vector3(cam.position[0], cam.position[1], cam.position[2]), camInverse.multiplyVector3(offset, new THREE.Vector3())); //p = cam.position + cam.orientation.Inverse() * offset
-					output += p.x + " " + p.y + " " + p.z + " 255 255 0\n";
-					cameraIndex++;
-				}
-			}
-		}
-		console.log(output);
-		return output;
-	};*/
 	
 	function moveCameraTo(dstPosition, dstRotation, options) {		
 		var _onUpdate   = options.onUpdate     || function() {};
@@ -626,8 +529,7 @@ function PhotoSynthViewer(div, frame, sound) {
 		});	
 	}
 	
-	var _imgLoading = '<img src="img/loading.gif" alt="" />';
-	
+
 	function setupScene() {
 		
 		_camera   = new THREE.Camera(45, _width / _height, 0.01, 1000); //fov ratio near far

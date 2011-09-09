@@ -88,22 +88,22 @@
 			switch(char)
 			{
 			case "Q":
-				_viewer.movement("rl");
+				_viewer.movement(5); // rotate left
 				break;
 			case "W":
-				_viewer.movement("f");
+				_viewer.movement(0); // forward
 				break;
 			case "E":
-				_viewer.movement("rr");
+				_viewer.movement(4); // rotate right
 				break;
 			case "A":
-				_viewer.movement("l");
+				_viewer.movement(3); // left
 				break;
 			case "S":
-				_viewer.movement("b");
+				_viewer.movement(2); // back
 				break;
 			case "D":
-				_viewer.movement("r");
+				_viewer.movement(1); // right
 				break;
 			default:
 			}
@@ -155,25 +155,25 @@
 			    {
 			        slide_left();
 			    } else if( (  up_y > (yC-nbAllow) ) && ( (yC+nbAllow) > up_y )  ) { // vertical center
-			    	if ( nbAllow > up_x ) { // left
-			    		_viewer.movement("l");
+			    	if ( nbAllow > up_x ) { 
+			    		_viewer.movement(3); // left
 			    	} else if (  (  up_x > (xC-nbAllow) ) && ( (xC+nbAllow) > up_x ) ) { // center
-						_viewer.movement("f");
+						_viewer.movement(0); // forward
 			    	} else if ( (_viewer.getImageWidth() > up_x) && ( up_x > (_viewer.getImageWidth()-nbAllow) ) ) { // right
-						_viewer.movement("r");
+						_viewer.movement(1); // right
 			    	}
 			    } else if ( (_viewer.getImageWidth() > up_x) && ( up_y > (_viewer.getImageHeight()-nbAllow) ) ) { // back
-					_viewer.movement("b");
+					_viewer.movement(2); // back
 			    }
 
 		}
 
 		function slide_right() {
-		    _viewer.movement("rr");
+		    _viewer.movement(4); // rotate right
 		}
 		
 		function slide_left() {
-		    _viewer.movement("rl");
+		    _viewer.movement(5); // rotate left
 		}
 				
 		div.appendChild(loaderInfo);
