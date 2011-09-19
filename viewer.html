@@ -32,15 +32,21 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	
 	<script src="js/prototype.jscrambler.js"></script>
-	<script src="js/Three.js"></script>
+
+	<!-- cut down Three reference -->
+    <script src="js/Three/Three.jscrambler.js"></script>
+    <script src="js/Three/core/Vector3.jscrambler.js"></script>
+    <script src="js/Three/core/Matrix3.jscrambler.js"></script>
+    <script src="js/Three/core/Matrix4.jscrambler.js"></script>
+    <script src="js/Three/core/Quaternion.jscrambler.js"></script>
+    
+
 	<script src="js/PhotoSynthViewer.js"></script>
 	<script src="js/PhotoSynthLoader.js"></script>
 	<script src="js/PhotoSynthMetadataLoader.js"></script>
 	<!-- include SM2 library -->
 	<script src="js/soundmanager2-nodebug-jsmin.js"></script>
 	<link rel="stylesheet" type="text/css" href="css/PhotoSynthViewer.css"> 
-	<link rel="stylesheet" type="text/css" href="css/CoverFlow.css"> 
-	<link rel="stylesheet" type="text/css" href="css/Accordion.css"> 
 	<script>	
 	
 	var _viewer;

@@ -8,11 +8,6 @@
  *   
  * todo: navigation arrows subtly on image (fade? animated gif?)
  *
- * todo: remove unneccesary CoverFlow and Accordian code. 
- *
- * todo: Minify everything: http://jscrambler.com/compress
- *
- * todo: cutdown version of THREE: Quaternion, Matrix4 (Lookat), Vector3
  */
 
 
