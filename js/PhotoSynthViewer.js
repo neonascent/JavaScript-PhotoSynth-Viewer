@@ -8,6 +8,7 @@
  *   
  * todo: navigation arrows subtly on image (fade? animated gif?)
  *
+ *
  */
 
 
@@ -147,7 +148,7 @@ function PhotoSynthViewer(div, frame, sound) {
 
 	this.playSound = function () {
 	    if (_useSound) {
-	        var newSound = './sounds/' + _guid + '/background.mp3';
+	        var newSound = './synths/' + _guid + '/sounds/background.mp3';
 	        if ((_currentSound != newSound) && (_soundReady)) {
 	            _currentSound = newSound;
 	            //soundManager.stop('aSound');

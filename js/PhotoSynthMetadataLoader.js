@@ -19,6 +19,7 @@ function PhotoSynthMetadataLoader(guid, options) {
 	var _onProgress = options.onProgress || function() {};
 	var _onError    = options.onError    || function() {};
 	var _soapInfo   = new SoapInfo();
+    var _synthTitle = "MystRecon";
 	var _jsonInfo   = new JsonInfo();
 	_soapInfo.guid = guid;
 	
@@ -212,6 +213,9 @@ function PhotoSynthMetadataLoader(guid, options) {
 				_onComplete(_that);
 			});
 		});	
+        parseSynthInfo(guid, function() {
+            document.title = _synthTitle;
+        });
 	}		
 	
 	function getNbImage(obj) {
@@ -224,22 +228,6 @@ function PhotoSynthMetadataLoader(guid, options) {
 	
 	function parseSoap(guid, onSoapParsed) {
 	
-		/*var request  = '<?xml version="1.0" encoding="utf-8"?>';
-		request += '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">';
-		request += '  <soap:Body>';
-		request += '    <GetCollectionData xmlns="http://labs.live.com/">';
-		request += '      <collectionId>' + guid + '</collectionId>';
-		request += '      <incrementEmbedCount>false</incrementEmbedCount>';
-		request += '    </GetCollectionData>';
-		request += '  </soap:Body>';
-		request += '</soap:Envelope>';		
-		
-		var xhr = new XMLHttpRequest();
-		xhr.open("POST", "http://photosynth.net/photosynthws/PhotosynthService.asmx", true);
-		xhr.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
-		xhr.setRequestHeader("SOAPAction", "http://labs.live.com/GetCollectionData");
-		*/
-		
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", "soap.php?guid="+guid, true);
 		
@@ -258,10 +246,37 @@ function PhotoSynthMetadataLoader(guid, options) {
 		xhr.send();		
 	}
 	
+    function parseSynthInfo(guid, onSynthInfoParsed) {
+	
+		/*<?xml version="1.0" encoding="utf-8"?>
+        <synth>
+        <title>Graffiti</title>
+        </synth>*/
+		
+		
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", "./synths/"+guid+"/synth.xml", true);
+		
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4) {
+				var xml = xhr.responseXML;
+				try
+                {
+                    _synthTitle = xml.getElementsByTagName("title")[0].firstChild.nodeValue;
+                }
+                catch(err)
+                {
+                }
+				onSynthInfoParsed();	
+			}			
+		};		
+		xhr.send();		
+	}
+
 	function parseJson(url, guid, onJsonParsed) {
 
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "json.php?url=" + url, true);
+		xhr.open("GET", "json.php?guid="+guid+"&url=" + url, true);
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4) {
