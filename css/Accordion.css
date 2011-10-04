@@ -1,8 +1,0 @@
-ul.acc * {font:12px Verdana,Arial}
-ul.acc {width:457px; list-style:none; color:#033; margin:0 auto 40px}
-ul.acc h3 {width:443px; border:1px solid #b4e800; padding:6px 6px 8px; font-weight:bold; margin-top:5px; cursor:pointer; background:url(chrome-extension://jnnhdiolpfgjbgagkbmdfidfofancmee/css/Accordion/header.gif); position:relative;margin-bottom:0px;}
-ul.acc h3:hover, ul.acc h3.selected {background:url(chrome-extension://jnnhdiolpfgjbgagkbmdfidfofancmee/css/Accordion/header_over.gif); color: black;}
-ul.acc h3 span.right {position: absolute; top:5px; right:5px;}
-ul.acc .acc-section {overflow:hidden; background:black}
-ul.acc .acc-content {width:425px; padding:15px; border:1px solid #b4e800; border-top:none; background:black}
-ul.acc .acc-content input.load {padding: 5px}

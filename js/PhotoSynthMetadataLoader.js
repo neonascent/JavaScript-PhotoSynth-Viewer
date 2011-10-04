@@ -229,7 +229,7 @@ function PhotoSynthMetadataLoader(guid, options) {
 	function parseSoap(guid, onSoapParsed) {
 	
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "soap.php?guid="+guid, true);
+		xhr.open("GET", "./synths/"+guid+"/soap.xml", true);
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4) {
@@ -276,7 +276,7 @@ function PhotoSynthMetadataLoader(guid, options) {
 	function parseJson(url, guid, onJsonParsed) {
 
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "json.php?guid="+guid+"&url=" + url, true);
+		xhr.open("GET", "./synths/"+guid+"/json.json", true);
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4) {

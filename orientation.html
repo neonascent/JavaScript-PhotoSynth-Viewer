@@ -1,0 +1,33 @@
+﻿
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Orientation</title>
+</head>
+<script>
+   window.addEventListener('deviceorientation', function(eventData) {
+    var LR = eventData.gamma;
+    var FB = eventData.beta;``
+    var DIR = eventData.alpha;
+    deviceOrientationHandler(LR, FB, DIR);                
+});
+
+function deviceOrientationHandler(LR, FB, DIR) {
+    document.getElementById("LR").innerHTML = "Left/Right : " + LR;
+    document.getElementById("FB").innerHTML = "Front/Back : " + FB;
+    document.getElementById("dir").innerHTML = "Direction : " + DIR;
+}
+
+</script>
+
+<body>
+<div id="content">
+    <h1>Orientation</h1>
+    <div id="LR"></div>
+    <div id="FB"></div>
+    <div id="dir"></div>
+</div>
+
+</body>
+</html>

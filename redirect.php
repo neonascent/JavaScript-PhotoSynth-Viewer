@@ -36,10 +36,10 @@ switch (mobile_user_agent_switch()) {
 	case "ipad":
 	case "blackberry":
 	case "android":
-		header('Location: viewer.html?guid='.$guid."&mobile=true");
+		header('Location: viewer.php?guid='.$guid."&mobile=true");
 		exit;
 	default: // normal browser
-		header('Location: viewer.html?guid='.$guid);
+		header('Location: viewer.php?guid='.$guid);
 		exit;
 }
 ?>

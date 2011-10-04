@@ -9,6 +9,12 @@
  * todo: navigation arrows subtly on image (fade? animated gif?)
  *
  *
+ todo: scripting (linking two, etc)
+ todo: preload images across sets (across scripted links)
+ todo: network calculation of sets
+ todo: mobile/local storage
+ todo: "loading" message
+ todo: android fullscreen
  */
 
 
@@ -71,7 +77,7 @@ function PhotoSynthViewer(div, frame, sound) {
 	var _currentSound;
 	var _currentSoundObject;
 
-	var _imgLoading = '<img src="img/loading.gif" alt="" />';
+	var _imgLoading = '<img src="img/loadinfo.net.gif" alt="" />';
 	
 	this.getLoader = function() {
 		return _loader;
@@ -88,10 +94,11 @@ function PhotoSynthViewer(div, frame, sound) {
 
 	this.moveToCamera = function (coordSystemIndex, cameraIndex, options) {
 	    // record the current camera index
-	    _currentCameraIndex = cameraIndex;
+        
+        _currentCameraIndex = cameraIndex;
 	    _currentCoordIndex = coordSystemIndex;
 
-	    var url = _thumbs.thumbs[cameraIndex].url;
+        var url = _thumbs.thumbs[cameraIndex].url;
 	    _imageHeight = _thumbs.thumbs[cameraIndex].height;
 	    _imageWidth = _thumbs.thumbs[cameraIndex].width;
 	    getDirections();
@@ -127,9 +134,9 @@ function PhotoSynthViewer(div, frame, sound) {
 
 
 	    // add "loading" and undisplayed new image
-	    var iconLeft = (.5 * _imageWidth) - (.5 * _iconsize);
-	    var iconTop = (.5 * _imageHeight) - (.5 * _iconsize);
-	    _container.insert('<img alt="loading" title="loading" src="img/loading.gif" style="position: absolute;  z-index:30; left: ' + iconLeft + 'px; top:' + iconTop + 'px;" />');
+	    var iconLeft = (_imageWidth/2) - 12;
+	    var iconTop = (_imageHeight/2) - 12;
+	    _container.insert('<img alt="loading" title="loading" src="img/loadinfo.net.gif" style="position: absolute;  z-index:30; left: ' + iconLeft + 'px; top:' + iconTop + 'px;" />');
 
 	    // hidden loading image        
 	    var img = new Element('img');
@@ -156,7 +163,6 @@ function PhotoSynthViewer(div, frame, sound) {
 	                id: 'aSound',
 	                url: newSound
 	            });
-
 	            // soundManager.stop('hhCymbal')
 	            loopSound(_currentSoundObject); //_currentSoundObject.play();
 	        }
@@ -473,9 +479,9 @@ function PhotoSynthViewer(div, frame, sound) {
 			// The basics: onready() callback
 
 			// Optional: ontimeout() callback for handling start-up failure
-			soundManager.onready(function() {
-			    _soundReady = true;
-			});
+		    soundManager.onready(function () {
+		        _soundReady = true;
+		    });
 			
 			soundManager.ontimeout(function(){
 	
@@ -589,8 +595,10 @@ function PhotoSynthViewer(div, frame, sound) {
 						var firstCameraIndex = getIndexOfFirstCamera(_loader, index);
 						_currentCoordIndex = index;
 						if (firstCameraIndex != -1) {
-							_currentCameraIndex = firstCameraIndex;
+						    _currentCameraIndex = firstCameraIndex;
+						    document.getElementById('initLoading').style.display = 'none';
 							_that.moveToCamera(_currentCoordIndex, _currentCameraIndex, {});
+
 						}							
 					}
 				});

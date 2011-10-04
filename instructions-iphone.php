@@ -2,7 +2,7 @@
 
 // get guid
 $guid = htmlspecialchars($_GET["guid"]);
-$link = "viewer.html?guid=".$guid."&mobile=true";
+$link = "viewer.php?guid=".$guid."&mobile=true";
 ?>
 <!DOCTYPE html>
 <html>

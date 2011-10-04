@@ -1,3 +1,105 @@
+<?php
+error_reporting(0);
+// get guid
+$guid = htmlspecialchars($_GET["guid"]);
+
+$cacheLocation = './synths/'.$guid.'/';
+$cacheSOAPFile = $cacheLocation . 'soap.xml';
+
+// if no soap, get it!
+if (!file_exists($cacheSOAPFile)) {
+
+	//$REQUEST_BODY = '';
+	$REQUEST_BODY  = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"; 
+	$REQUEST_BODY .= "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">";
+	$REQUEST_BODY .= "  <soap:Body>";
+	$REQUEST_BODY .= "    <GetCollectionData xmlns=\"http://labs.live.com/\">";
+	$REQUEST_BODY .= "      <collectionId>" . $guid . "</collectionId>";
+	$REQUEST_BODY .= "      <incrementEmbedCount>false</incrementEmbedCount>";
+	$REQUEST_BODY .= "    </GetCollectionData>";
+	$REQUEST_BODY .= "  </soap:Body>";
+	$REQUEST_BODY .= "</soap:Envelope>";
+
+
+	// from Henri Astre's PhotoSynth viewer
+	/*
+			 
+	var xhr = new XMLHttpRequest();
+	xhr.open("POST", "http://photosynth.net/photosynthws/PhotosynthService.asmx", true);
+	xhr.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+	*/
+
+	$soap_do = curl_init();
+	curl_setopt($soap_do, CURLOPT_URL,            "http://photosynth.net/photosynthws/PhotosynthService.asmx" );
+	curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT, 10);
+	curl_setopt($soap_do, CURLOPT_TIMEOUT,        60);
+	curl_setopt($soap_do, CURLOPT_RETURNTRANSFER, true );
+	curl_setopt($soap_do, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($soap_do, CURLOPT_SSL_VERIFYHOST, false);
+	curl_setopt($soap_do, CURLOPT_POST,           true );
+	curl_setopt($soap_do, CURLOPT_POSTFIELDS,    $REQUEST_BODY);
+	curl_setopt($soap_do, CURLOPT_HTTPHEADER,     array('Content-Type: text/xml; charset=utf-8', 'SOAPAction: http://labs.live.com/GetCollectionData', 'Content-Length: '.strlen($REQUEST_BODY) ));
+
+	$result = curl_exec($soap_do);
+	if($result === false)
+	{
+		$err = 'Curl error: ' . curl_error($soap_do);
+		curl_close($soap_do);
+		//return $err;
+		print_r($err);
+	}
+	else
+	{
+		curl_close($soap_do);
+		//return 'Operation completed without any errors';
+		// We'll be outputting a XML
+		
+		// write file to cache
+		mkdir($cacheLocation,0777,TRUE);
+		$fh = fopen($cacheSOAPFile, 'w') or die();
+		fwrite($fh, $result);
+		fclose($fh);	
+	}
+	
+	// now get json!
+	$parts = explode('<JsonUrl>', $result);
+	$jsonUrl = explode('</JsonUrl>', $parts[1]);
+	$url = $jsonUrl[0];
+	
+	$cacheJsonFile = $cacheLocation . 'json.json';
+	error_reporting(E_ALL);
+
+	// Get JSON
+	if (!file_exists($cacheJsonFile)) {
+
+		$soap_do = curl_init();
+		curl_setopt($soap_do, CURLOPT_URL,            $url );
+		curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT, 10);
+		curl_setopt($soap_do, CURLOPT_TIMEOUT,        60);
+		curl_setopt($soap_do, CURLOPT_RETURNTRANSFER, true );
+
+
+		$result = curl_exec($soap_do);
+		if($result === false)
+		{
+			$err = 'Curl error: ' . curl_error($soap_do);
+			curl_close($soap_do);
+			//return $err;
+			print_r($err);
+		}
+		else
+		{
+			
+			curl_close($soap_do);		
+			// write file to cache
+			$fh = fopen($cacheJsonFile, 'w') or die();
+			fwrite($fh, $result);
+			fclose($fh);
+		}
+	}
+	
+} // end if not cached soap
+?>
 <!--
 	Copyright (c) 2011 ASTRE Henri (http://www.visual-experiments.com)
 
@@ -20,11 +122,11 @@
 	THE SOFTWARE.
 -->
 <!DOCTYPE html>
-<html>
+<html manifest="cache.manifest.php?guid=<?php echo htmlspecialchars($_GET["guid"]); ?>">
 	<head>
 	<title>MystRecon</title>
 	<!-- set up size for iPhone and iPad -->
-	<meta name="viewport" content="width=device-width,height=device-height,user-scalable=no" /> <!-- ,initial-scale=1,user-scalable=no -->
+    <meta name="viewport" content="user-scalable=no, maximum-scale=1.5, width=512" /> <!-- making assumption of landscape -->
 	<meta name="apple-mobile-web-app-capable" content="yes" /> <!-- allows fullscreen as Home Screen link on iphone -->
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <!-- 	<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" />
@@ -130,9 +232,11 @@
 		        if (window.orientation == 90
                 || window.orientation == -90) {
 		            document.getElementById('rotateccw').style.display = 'none';
+		            document.getElementById('displayDiv').style.display = '';                 
 		        }
 		        else {
 		            document.getElementById('rotateccw').style.display = '';
+		            document.getElementById('displayDiv').style.display = 'none';
 		        }
 		    }
 		}
@@ -168,9 +272,21 @@
 		    do_work();
 		    
 		});
-		
 
-        
+		// possible for later: dynamic viewport
+		/*
+        function setScale() {
+		    var metatags = document.getElementsByTagName('meta');
+		    for (cnt = 0; cnt < metatags.length; cnt++) {
+		        var element = metatags[cnt];
+		        if (element.getAttribute('name') == 'viewport') {
+
+		            element.setAttribute('content', 'initial-scale=' + width + '; maximum-scale = 5; user-scalable = yes');
+		            document.body.style['max-width'] = width + 'px';
+		        }
+		    }
+		}
+        */
 
 		function do_work() {	
 			var xC = _viewer.getImageWidth() / 2;
@@ -248,7 +364,12 @@
 		}
 		return false;
 	}
-	
+
+	touchMove = function (event) {
+	    // Prevent scrolling on this element
+	    event.preventDefault();
+	}
+
 	function addViewer() {
 		var isOverCanvas = false;	
 		var displayDiv = document.getElementById("displayDiv");
@@ -259,10 +380,6 @@
 				return false; 
 		};
 	
-		//Warning: there is a race condition between Microsoft script detecting Sylverlight and my script...
-		//They are replacing the content of "silverlightDiv" with a innerHTML call if Sylverlight is desactivated
-		//Thus it will remove my canvas if I add it in "silverlightDiv" before their call to innerHTML :-(
-		//->This is why I have added the canvas before "silverlightDiv" and not as a child
 		
 		if (guid != "") { //Silverlight is desactivated and were are on a page with a viewable synth
 
@@ -276,11 +393,24 @@
 			//Should warn the user to desactivate Silverlight or this extension
 			alert("no guid!");
 		}
-	}
+}
+
+    /*
+    * function for working out look direction.  We could use DeviceOrientationEvent for devices with gyroscopes (iPad2 and iPhone 4), but for those without, we might use DeviceMotion, 
+    * or just location API to get compass bearing. 
+    * (http://stackoverflow.com/questions/4378435/how-to-access-accelerometer-gyroscope-data-from-javascript)
+    * code might be long, so maybe activate download on basis of a URL parameter
+    */
+    function lookDirection() {
+
+
+    }
+
 </script>
 </head>
 <body onLoad="addViewer();">
-<div id="displayDiv">test</div>
-<img id="rotateccw" src="./img/rotateccw.jpg" style="position: absolute; top: 0; left: 0; width: 72px; height: 72px; display: none; "/>
+<div id="displayDiv" ontouchmove="touchMove(event);">test</div>
+<img id="rotateccw" src="./img/rotateccw.jpg" style="position: absolute;top: 50%; left: 50%; width: 36px; height: 36px; margin-top: -18px; margin-left: -18px; display: none; "/>
+<img id="initLoading" src="./img/loadinfo.net.gif" style="position: absolute; top: 50%; left: 50%; width: 24px; height: 24px;  margin-top: -12px; margin-left: -12px;  "/>
 </body>
 </html>
