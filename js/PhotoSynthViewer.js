@@ -364,7 +364,7 @@ function PhotoSynthViewer(div, frame, sound) {
 	    // if uninitialized, set starting quat
 	    if (_deviceStartQuat === undefined) {
 	        _deviceStartQuat = deviceOrientation;
-	        alert("reference set");
+	        //alert("reference set");
 	    }
 
 	    // rotation from original orientation
