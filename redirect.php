@@ -33,11 +33,11 @@ switch (mobile_user_agent_switch()) {
 	case "iphone": // redirect for ipads
 		$link = "instructions-iphone.php?guid=". $guid;
 		break;
-	case "ipad":
 	case "blackberry":
 	case "android":
 		header('Location: viewer.php?guid='.$guid."&mobile=true");
 		exit;
+	case "ipad":
 	default: // normal browser
 		header('Location: viewer.php?guid='.$guid);
 		exit;

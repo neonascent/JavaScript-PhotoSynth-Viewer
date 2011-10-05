@@ -77,6 +77,10 @@ function PhotoSynthViewer(div, frame, sound) {
 	var _currentSound;
 	var _currentSoundObject;
 
+	// bits for handling orientation rotation (initial, simple way - need to improve with just 1:1 angle coordination)
+	var _deviceStartQuat; // starting device bearing used to work out difference
+	var _firstCameraQuat;
+
 	var _imgLoading = '<img src="img/loadinfo.net.gif" alt="" />';
 	
 	this.getLoader = function() {
@@ -90,15 +94,15 @@ function PhotoSynthViewer(div, frame, sound) {
 	this.getImageWidth = function() {
 		return _imageWidth;
 	};
-	
+
 
 	this.moveToCamera = function (coordSystemIndex, cameraIndex, options) {
 	    // record the current camera index
-        
-        _currentCameraIndex = cameraIndex;
+
+	    _currentCameraIndex = cameraIndex;
 	    _currentCoordIndex = coordSystemIndex;
 
-        var url = _thumbs.thumbs[cameraIndex].url;
+	    var url = _thumbs.thumbs[cameraIndex].url;
 	    _imageHeight = _thumbs.thumbs[cameraIndex].height;
 	    _imageWidth = _thumbs.thumbs[cameraIndex].width;
 	    getDirections();
@@ -121,6 +125,7 @@ function PhotoSynthViewer(div, frame, sound) {
 	            var iconLeft = (_dIconsPosition[k][0] * _imageWidth) + (_dIconsPosition[k][2] * _iconsize);
 	            var iconTop = (_dIconsPosition[k][1] * _imageHeight) + (_dIconsPosition[k][3] * _iconsize);
 	            updateHTML = updateHTML + '<img alt="' + _direction[k] + '" title="' + _direction[k] + '" src="img/' + _dIcons[k] + '" style="position: absolute;  z-index:20; left: ' + iconLeft + 'px; top:' + iconTop + 'px;" />';
+
 	            // hidden pre-load images
 	            var urlOther = _thumbs.thumbs[_direction[k]].url;
 	            updateHTML = updateHTML + '<img src="' + urlOther + '" style="display: none;"/>';
@@ -134,8 +139,8 @@ function PhotoSynthViewer(div, frame, sound) {
 
 
 	    // add "loading" and undisplayed new image
-	    var iconLeft = (_imageWidth/2) - 12;
-	    var iconTop = (_imageHeight/2) - 12;
+	    var iconLeft = (_imageWidth / 2) - 12;
+	    var iconTop = (_imageHeight / 2) - 12;
 	    _container.insert('<img alt="loading" title="loading" src="img/loadinfo.net.gif" style="position: absolute;  z-index:30; left: ' + iconLeft + 'px; top:' + iconTop + 'px;" />');
 
 	    // hidden loading image        
@@ -184,11 +189,15 @@ function PhotoSynthViewer(div, frame, sound) {
 	// rotation should be reciprical and isn't. 
 	
 	function getDirections() {
-		
+
 		// get current camera
 		var currentCamera = _loader.getCamera(_currentCoordIndex, _currentCameraIndex);
 		var currentOrientation = new THREE.Quaternion(currentCamera.orientation[0], currentCamera.orientation[1], currentCamera.orientation[2], currentCamera.orientation[3]);
-		
+		// if uninitialized, set starting quat
+	    if (_firstCameraQuat === undefined) {
+	        _firstCameraQuat = currentOrientation;
+	    }
+
 		// set up direction placeholders
 		var directionSet = 0;
 		var rotationSet = false;
@@ -343,7 +352,45 @@ function PhotoSynthViewer(div, frame, sound) {
 	        this.moveToCamera(_currentCoordIndex, _direction[d], {});
 	    }
 	}
-	
+
+    // move for orientation
+	this.orientation = function (alpha, beta, gamma) {
+	    var orientAngle = 5;
+
+	    var deviceOrientation = new THREE.Quaternion();
+	    deviceOrientation.setFromEuler(new THREE.Vector3(0, 0, gamma * 2));  // why multiply by 2?  turned off other vectors so as not to confuse it for the moment.  Can turn on again when orientating to all rotations of cameras in vicinity
+
+	    document.title = gamma; 
+	    // if uninitialized, set starting quat
+	    if (_deviceStartQuat === undefined) {
+	        _deviceStartQuat = deviceOrientation;
+	        alert("reference set");
+	    }
+
+	    // rotation from original orientation
+	    var relativeRotationFromOriginalPosition = relativeQuaternion(deviceOrientation, _deviceStartQuat);
+
+
+	    // find relative left rotation
+	    for (var i = 4; i < 6; i++) {
+	        if ((_direction[i] !== undefined) && (_direction[i] !== -1)) {
+	            var thisCamera = _loader.getCamera(_currentCoordIndex, _direction[i]);
+	            var thisOrientation = new THREE.Quaternion(thisCamera.orientation[0], thisCamera.orientation[1], thisCamera.orientation[2], thisCamera.orientation[3]);
+	            var thisRot = relativeQuaternion(_firstCameraQuat, thisOrientation);
+
+	            var lookRotation = relativeQuaternion(thisRot, relativeRotationFromOriginalPosition);
+	            var angle = vToDegrees(QuaternionToEuler(lookRotation));
+
+	            // check if close
+	            if ((170 > Math.abs(angle.x)) && (170 > Math.abs(angle.y))) { // if not rotated in opposite direction
+	                if ((angle.z > -orientAngle) && (orientAngle > angle.z)) { // then if close
+	                    this.movement(i);
+	                }
+	            }
+	        }
+	    }
+	}
+
 	/*
 	* These are for close points. considered "coexistent" i.e. on top of each other, so privelege rotation. 
 	*/

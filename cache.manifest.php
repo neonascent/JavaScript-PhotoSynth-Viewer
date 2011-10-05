@@ -21,7 +21,6 @@ CACHE MANIFEST
 # Serial number 3
 
 # static libraries
-
 ./js/PhotoSynthLoader.js
 ./js/PhotoSynthMetadataLoader.js
 ./js/PhotoSynthViewer.js
@@ -30,6 +29,8 @@ CACHE MANIFEST
 ./mobile-bookmark-bubble/bookmark_bubble.js
 ./bookmark.js
 ./css/PhotoSynthViewer.css
+viewer.php
+
 
 # cut down Three reference 
 ./js/Three.js
@@ -112,5 +113,4 @@ if (file_exists($cacheFile)) {
 ?>
 
 NETWORK:
-
 

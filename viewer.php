@@ -241,6 +241,15 @@ if (!file_exists($cacheSOAPFile)) {
 		    }
 		}
 
+		if (!getOrientationOff()) {
+			// send orientation to viewer
+			window.addEventListener('deviceorientation', function(eventData) {
+				var LR = eventData.gamma;
+				var FB = eventData.beta;
+				var DIR = eventData.alpha;
+				_viewer.orientation(LR, FB, DIR);            
+			});
+		}
 
 		Event.observe(canvasContainer, 'mousedown', function(event) {
 		    down_x = event.pageX;
@@ -355,6 +364,18 @@ if (!file_exists($cacheSOAPFile)) {
             return false;
         }
     }
+	
+	function getOrientationOff() {
+        var url = document.URL;
+        var tmp = url.split("&o=");
+        if (tmp.length == 2) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
 
 	function isSilverlightEnable() {
 		var plugins = navigator.plugins;
@@ -395,16 +416,6 @@ if (!file_exists($cacheSOAPFile)) {
 		}
 }
 
-    /*
-    * function for working out look direction.  We could use DeviceOrientationEvent for devices with gyroscopes (iPad2 and iPhone 4), but for those without, we might use DeviceMotion, 
-    * or just location API to get compass bearing. 
-    * (http://stackoverflow.com/questions/4378435/how-to-access-accelerometer-gyroscope-data-from-javascript)
-    * code might be long, so maybe activate download on basis of a URL parameter
-    */
-    function lookDirection() {
-
-
-    }
 
 </script>
 </head>
